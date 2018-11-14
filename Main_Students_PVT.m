@@ -56,7 +56,7 @@ fprintf('\nEnd of reading the RINEX files.\n');
 % Extract GPS navigation message data
 [Iono_a, Iono_b, Ephem] = ExtractData_N(HEADER_N, DATA_N);
 % Extract GPS observation data
-[mEpoch, Nb_Epoch, vNb_Sat, Total_Nb_Sat, mTracked, mC1, mL1, mD1, handles.mS1]=ExtractData_O(DATA_O, nEpoch_max);
+[mEpoch, Nb_Epoch, vNb_Sat, Total_Nb_Sat, mTracked, handles.mC1, handles.mL1, handles.mD1, handles.mS1]=ExtractData_O(DATA_O, nEpoch_max);
 fprintf('\nEnd of extracting the data.\n');
 
 %%-------------------------------------------------------------------------
@@ -89,7 +89,7 @@ for epoch=1:Nb_Epoch
     count = 1;
     for PRN=1:32
         if mTracked(epoch,PRN)==1 %Use mTracked(i,j) to decide if PRN j is tracked at epoch i
-            f_C1 = mC1(epoch,PRN); %code range measurement of j satellite at epoch i
+            f_C1 = handles.mC1(epoch,PRN); %code range measurement of j satellite at epoch i
             %Select Ephermis (set the best fits SV iPRN at tiem iUser_Nos)
             [vEphemeris] = SelectEphemeris(Ephem, PRN, iUser_NoS(epoch));
             [iDelta_t_SV, iT_SV] = ComputeTransmissionTime(vEphemeris, iUser_SoW(epoch), f_C1);
@@ -156,7 +156,7 @@ handles.SVTracked = SVTracked;
 %%-------------------------------------------------------------------------
 %% Caculate Receiver Position and Receiver Clock Error
 
-[handles.RX_Position_XYZ, handles.RX_ClockError,handles.Matrix] = RX_Position_and_Clock(Result,mC1,Nb_Epoch,Epoch_SV_Number,handles.HMode);
+[handles.RX_Position_XYZ, handles.RX_ClockError,handles.Matrix] = RX_Position_and_Clock(Result,handles.mC1,Nb_Epoch,Epoch_SV_Number,handles.HMode);
 [handles.RX_Position_LLH, handles.RX_Position_ENU] = RX_Position_LLH_ENU(handles.RX_Position_XYZ,Nb_Epoch);
 
 handles.Result = Result;

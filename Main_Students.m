@@ -169,12 +169,12 @@ plot(mS1);
 
 % mean_ENU = mean(RX_Position_ENU);
 % stdev_ENU = std(RX_Position_ENU);
-% figure;
-% plot(iUser_NoS,RX_Position_ENU(:,1));
-% figure;
-% plot(iUser_NoS,RX_Position_ENU(:,2));
-% figure;
-% plot(iUser_NoS,RX_Position_ENU(:,3));
+figure;
+plot(RX_Position_ENU(:,1));
+figure;
+plot(RX_Position_ENU(:,2));
+figure;
+plot(RX_Position_ENU(:,3));
 
 
 

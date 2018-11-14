@@ -22,7 +22,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 13-Nov-2018 23:06:42
+% Last Modified by GUIDE v2.5 14-Nov-2018 18:13:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -217,7 +217,7 @@ set(handles.Plot4,'visible','off');
 
 axes(handles.Plot1)
 hold off
-plot(handles.mS1,'linewidth',1.5)
+plot(handles.mS1,'linewidth',1)
 ylabel('dB')
 xlabel('Epoch')
 title('Signal to Noise Ratio','fontweight','bold')
@@ -254,3 +254,71 @@ end
 grid on
 title('Satellites orbits during data collection','fontweight','bold')
 legend(Legend);
+
+
+% --- Executes on button press in PseduoButton.
+function PseduoButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PseduoButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+set(handles.Plot3,'visible','off');
+set(handles.Plot4,'visible','off');
+
+axes(handles.Plot1)
+plot(handles.mC1,'linewidth',1)
+ylabel('m')
+xlabel('Epoch')
+title('Pseudorange','fontweight','bold')
+legend(strcat('PRN # ', string(find(sum(handles.mC1) ~= 0))))
+
+
+% --- Executes on button press in CarrierPhaseButton.
+function CarrierPhaseButton_Callback(hObject, eventdata, handles)
+% hObject    handle to CarrierPhaseButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+set(handles.Plot3,'visible','off');
+set(handles.Plot4,'visible','off');
+
+axes(handles.Plot1)
+plot(handles.mL1,'linewidth',1)
+ylabel('m')
+xlabel('Epoch')
+title('Carrier Phase','fontweight','bold')
+legend(strcat('PRN # ', string(find(sum(handles.mL1) ~= 0))))
+
+
+% --- Executes on button press in pushbutton15.
+function pushbutton15_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton15 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','off');
+set(handles.Plot2,'visible','on');
+set(handles.Plot3,'visible','on');
+set(handles.Plot4,'visible','on');
+
+axes(handles.Plot2)
+hold off;
+plot(handles.RX_Position_ENU(:,1));
+ylabel('m')
+xlabel('Epoch')
+title('East','fontweight','bold')
+
+axes(handles.Plot3)
+hold off;
+plot(handles.RX_Position_ENU(:,1));
+ylabel('m')
+xlabel('Epoch')
+title('North','fontweight','bold')
+
+axes(handles.Plot4)
+hold off;
+plot(handles.RX_Position_ENU(:,1));
+ylabel('m')
+xlabel('Epoch')
+title('Up','fontweight','bold')
