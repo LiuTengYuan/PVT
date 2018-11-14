@@ -1,0 +1,9 @@
+     2.10           H: GEO NAV MSG DATA                     RINEX VERSION / TYPE
+RTKCONV 2.4.1                           20181001 065556 UTC PGM / RUN BY / DATE 
+log: D:\Nico Personal\Universidad\MSc\PVT\NAVandOBS\COM6_1  COMMENT             
+format: u-blox                                              COMMENT             
+                                                            END OF HEADER       
+20 18 10  1  6 53  4.0  .000000000000E+00  .000000000000E+00  .111287000000E+06
+     .406367200000E+05  .000000000000E+00  .000000000000E+00  .100000000000E+01
+    -.112459160000E+05  .000000000000E+00  .000000000000E+00  .327670000000E+05
+     .000000000000E+00  .000000000000E+00  .000000000000E+00  .000000000000E+00
