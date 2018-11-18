@@ -85,7 +85,6 @@ for epoch=1:Nb_Epoch
     Result_Info(epoch).INFO = Titles;
     iUser_NoS = mEpoch(:,3); %user time(NoS)
     iUser_SoW = mEpoch(:,2); %user time(SoW)
-    InstantaneousResult = zeros(vNb_Sat(epoch), 5);
     count = 1;
     for PRN=1:32
         if mTracked(epoch,PRN)==1 %Use mTracked(i,j) to decide if PRN j is tracked at epoch i
@@ -153,6 +152,7 @@ handles.SV = SV;
 handles.INDEX = INDEX;
 handles.SVTracked = SVTracked;
 
+
 %%-------------------------------------------------------------------------
 %% Caculate Receiver Position and Receiver Clock Error
 
@@ -163,6 +163,58 @@ handles.Result = Result;
 handles.Result_Info = Result_Info;
 
 % keyboard
+
+
+%%-------------------------------------------------------------------------
+%% Recaculate Tracked_mS1,Tracked_mC1,Tracked_mL1
+
+handles.Tracked_mS1 = zeros(Nb_Epoch,length(handles.SVTracked));
+for num_SV=1:length(SVTracked)
+    handles.Tracked_mS1(:,num_SV) = handles.mS1(:,handles.SVTracked(num_SV));
+end
+handles.Tracked_mS1(handles.Tracked_mS1==0) = nan;
+
+handles.Tracked_mC1 = zeros(Nb_Epoch,length(handles.SVTracked));
+for num_SV=1:length(SVTracked)
+    handles.Tracked_mC1(:,num_SV) = handles.mC1(:,handles.SVTracked(num_SV));
+end
+handles.Tracked_mC1(handles.Tracked_mC1==0) = nan;
+
+handles.Tracked_mL1 = zeros(Nb_Epoch,length(handles.SVTracked));
+for num_SV=1:length(SVTracked)
+    handles.Tracked_mL1(:,num_SV) = handles.mL1(:,handles.SVTracked(num_SV));
+end
+handles.Tracked_mL1(handles.Tracked_mL1==0) = nan;
+
+
+%% Calculate and Plot Elevation & Azimuth
+
+Elevation_Azimuth(Nb_Epoch) = struct();
+for epoch=1:Nb_Epoch
+    Elevation_Azimuth(epoch).SV(:,1) = Result(epoch).SV(:,1);
+    for epoch_sv=1:Epoch_SV_Number(epoch)
+        [fElevation, fAzimuth] = elevation_azimuth(handles.RX_Position_XYZ(epoch,:), Result(epoch).SV(epoch_sv,2:4));
+        Elevation_Azimuth(epoch).SV(epoch_sv,2) = rad2deg(fElevation);
+        Elevation_Azimuth(epoch).SV(epoch_sv,3) = rad2deg(fAzimuth);
+    end
+end
+
+azimuth_SV = zeros(Nb_Epoch,length(SVTracked));
+elevation_SV = zeros(Nb_Epoch,length(SVTracked));
+for epoch=1:Nb_Epoch
+    for num_SV=1:length(SVTracked)
+        find_SV = find(Elevation_Azimuth(epoch).SV(:,1)==SVTracked(num_SV));
+        if find_SV
+            elevation_SV(epoch,num_SV) = Elevation_Azimuth(epoch).SV(find_SV,2);
+            azimuth_SV(epoch,num_SV) = Elevation_Azimuth(epoch).SV(find_SV,3);
+        end
+    end
+end
+elevation_SV(elevation_SV==0) = nan;
+azimuth_SV(azimuth_SV==0) = nan;
+
+handles.elevation_SV = elevation_SV;
+handles.azimuth_SV = azimuth_SV;
 
 end
 

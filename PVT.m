@@ -22,7 +22,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 14-Nov-2018 18:13:57
+% Last Modified by GUIDE v2.5 17-Nov-2018 13:21:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -217,12 +217,11 @@ set(handles.Plot4,'visible','off');
 
 axes(handles.Plot1)
 hold off
-plot(handles.mS1,'linewidth',1)
+plot(handles.Tracked_mS1,'linewidth',1)
 ylabel('dB')
 xlabel('Epoch')
 title('Signal to Noise Ratio','fontweight','bold')
-legend(strcat('PRN # ', string(find(sum(handles.mS1) ~= 0))))
-
+legend(strcat('PRN # ', string(find(sum(handles.mS1) ~= 0))),'Location','BestOutside')
 
 % --- Executes on button press in OrbitsButton.
 function OrbitsButton_Callback(hObject, eventdata, handles)
@@ -267,11 +266,12 @@ set(handles.Plot3,'visible','off');
 set(handles.Plot4,'visible','off');
 
 axes(handles.Plot1)
-plot(handles.mC1,'linewidth',1)
+hold off
+plot(handles.Tracked_mC1,'linewidth',1)
 ylabel('m')
 xlabel('Epoch')
 title('Pseudorange','fontweight','bold')
-legend(strcat('PRN # ', string(find(sum(handles.mC1) ~= 0))))
+legend(strcat('PRN # ', string(find(sum(handles.mC1) ~= 0))),'Location','BestOutside')
 
 
 % --- Executes on button press in CarrierPhaseButton.
@@ -285,16 +285,17 @@ set(handles.Plot3,'visible','off');
 set(handles.Plot4,'visible','off');
 
 axes(handles.Plot1)
-plot(handles.mL1,'linewidth',1)
+hold off
+plot(handles.Tracked_mL1,'linewidth',1)
 ylabel('m')
 xlabel('Epoch')
 title('Carrier Phase','fontweight','bold')
-legend(strcat('PRN # ', string(find(sum(handles.mL1) ~= 0))))
+legend(strcat('PRN # ', string(find(sum(handles.mL1) ~= 0))),'Location','BestOutside')
 
 
-% --- Executes on button press in pushbutton15.
-function pushbutton15_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton15 (see GCBO)
+% --- Executes on button press in RXENUButtom.
+function RXENUButtom_Callback(hObject, eventdata, handles)
+% hObject    handle to RXENUButtom (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.Plot1,'visible','off');
@@ -322,3 +323,41 @@ plot(handles.RX_Position_ENU(:,1));
 ylabel('m')
 xlabel('Epoch')
 title('Up','fontweight','bold')
+
+
+% --- Executes on button press in ElevationButton.
+function ElevationButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ElevationButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+set(handles.Plot3,'visible','off');
+set(handles.Plot4,'visible','off');
+
+axes(handles.Plot1)
+hold off
+plot(handles.elevation_SV,'linewidth',2)
+ylabel('m')
+xlabel('Epoch')
+title('Elevation between RX and SV','fontweight','bold')
+legend(strcat('PRN # ', string(handles.SVTracked)),'Location','BestOutside')
+
+
+% --- Executes on button press in AzimuthButton.
+function AzimuthButton_Callback(hObject, eventdata, handles)
+% hObject    handle to AzimuthButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+set(handles.Plot3,'visible','off');
+set(handles.Plot4,'visible','off');
+
+axes(handles.Plot1)
+hold off
+plot(handles.azimuth_SV,'linewidth',2)
+ylabel('m')
+xlabel('Epoch')
+title('Azimuth between RX and SV','fontweight','bold')
+legend(strcat('PRN # ', string(handles.SVTracked)),'Location','BestOutside')
