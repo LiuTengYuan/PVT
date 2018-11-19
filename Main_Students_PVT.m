@@ -162,6 +162,11 @@ handles.SVTracked = SVTracked;
 handles.Result = Result;
 handles.Result_Info = Result_Info;
 
+mean_LLH = mean(handles.RX_Position_LLH);
+stdev_LLH = std(handles.RX_Position_LLH);
+mean_ENU = mean(handles.RX_Position_ENU);
+stdev_ENU = std(handles.RX_Position_ENU);
+
 % keyboard
 
 

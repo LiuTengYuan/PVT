@@ -22,7 +22,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 17-Nov-2018 13:21:18
+% Last Modified by GUIDE v2.5 19-Nov-2018 00:03:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -267,7 +267,7 @@ set(handles.Plot4,'visible','off');
 
 axes(handles.Plot1)
 hold off
-plot(handles.Tracked_mC1,'linewidth',1)
+plot(handles.Tracked_mC1,'linewidth',1,'linestyle','none','marker','.')
 ylabel('m')
 xlabel('Epoch')
 title('Pseudorange','fontweight','bold')
@@ -286,7 +286,7 @@ set(handles.Plot4,'visible','off');
 
 axes(handles.Plot1)
 hold off
-plot(handles.Tracked_mL1,'linewidth',1)
+plot(handles.Tracked_mL1,'linewidth',1,'linestyle','none','marker','.')
 ylabel('m')
 xlabel('Epoch')
 title('Carrier Phase','fontweight','bold')
@@ -361,3 +361,43 @@ ylabel('m')
 xlabel('Epoch')
 title('Azimuth between RX and SV','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked)),'Location','BestOutside')
+
+
+% --- Executes on button press in LATLONButton.
+function LATLONButton_Callback(hObject, eventdata, handles)
+% hObject    handle to LATLONButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% if strcmp(get(hObject,'string'),'LAT - LON')
+
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+set(handles.Plot3,'visible','off');
+set(handles.Plot4,'visible','off');
+
+axes(handles.Plot1)
+hold off
+
+for index = 1 : handles.INDEX
+    for epoch = 1 : length(handles.SV(index).Result_x)
+        [handles.SV(index).llh(epoch,:)] = xyz_2_lla_PVT( [handles.SV(index).Result_x(epoch), handles.SV(index).Result_y(epoch), handles.SV(index).Result_z(epoch)] );
+    end
+end
+for index = 1 : handles.INDEX
+    EpochToPlot = round(length(handles.SV(index).Result_x)/2);
+    scatter(rad2deg(handles.SV(index).llh(EpochToPlot,1)),rad2deg(handles.SV(index).llh(EpochToPlot,2)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));  
+    legend('-DynamicLegend')
+    hold all
+end
+Legend = get(gca,'Legend');
+Legend = Legend.String;
+for index = 1 : handles.INDEX
+    plot(rad2deg(handles.SV(index).llh(:,1)),rad2deg(handles.SV(index).llh(:,2)),'k.');%,'DisplayName',sprintf("PRN %d", PRN));
+    hold on
+end
+grid on
+legend(Legend);
+xlabel('Latitude (degrees)')
+ylabel('Longitude (degrees)')
+title('Sky Plot Latitude - Longitude','fontweight','bold')

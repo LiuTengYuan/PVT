@@ -165,9 +165,10 @@ plot(mS1);
 % figure;
 % plot(iUser_NoS,RX_Position_LLH(:,3));
 
-
-% mean_ENU = mean(RX_Position_ENU);
-% stdev_ENU = std(RX_Position_ENU);
+mean_LLH = mean(RX_Position_LLH);
+stdev_LLH = std(RX_Position_LLH);
+mean_ENU = mean(RX_Position_ENU);
+stdev_ENU = std(RX_Position_ENU);
 % figure;
 % plot(RX_Position_ENU(:,1));
 % figure;
@@ -179,6 +180,7 @@ plot(mS1);
 %%-------------------------------------------------------------------------
 %% Calculate and Plot Elevation & Azimuth
 
+% clear Elevation_Azimuth;
 Elevation_Azimuth(Nb_Epoch) = struct();
 for epoch=1:Nb_Epoch
     Elevation_Azimuth(epoch).SV(:,1) = Result(epoch).SV(:,1);
