@@ -12,6 +12,9 @@ addpath(genpath('./Library'));
 %%-------------------------------------------------------------------------
 %% Define collected data files to process: .obs & .nav (Rinex 2.11)
 
+% filename_o = './Data/CA548/COM5_180927_195051.obs';
+% filename_n = './Data/CA548/COM5_180927_195051.nav';
+
 filename_o = './Data/test/COM44_150205_094639.obs';
 filename_n = './Data/test/COM44_150205_094639.nav';
 ref_pos = [4627537.2739   119698.4035  4373317.5742];
@@ -75,7 +78,7 @@ for epoch=1:Nb_Epoch
     iUser_NoS = mEpoch(:,3); %user time(NoS)
     iUser_SoW = mEpoch(:,2); %user time(SoW)
     count = 1;
-    for PRN=1:32
+    for PRN=1:length(mTracked(1,:))
         if mTracked(epoch,PRN)==1 %Use mTracked(i,j) to decide if PRN j is tracked at epoch i
             f_C1 = mC1(epoch,PRN); %code range measurement of j satellite at epoch i
             %Select Ephermis (set the best fits SV iPRN at tiem iUser_Nos)
@@ -101,7 +104,7 @@ SV = struct();
 SVTracked = zeros();
 INDEX = 0;
 LastEpochCheck = 1;
-for PRN=1:32
+for PRN=1:length(mTracked(1,:))
     ChangeSV = 1;
     for epoch=1:Nb_Epoch
         if mTracked(epoch,PRN)
@@ -180,14 +183,14 @@ stdev_ENU = std(RX_Position_ENU);
 %%-------------------------------------------------------------------------
 %% Calculate and Plot Elevation & Azimuth
 
-% clear Elevation_Azimuth;
+clear Elevation_Azimuth;
 Elevation_Azimuth(Nb_Epoch) = struct();
 for epoch=1:Nb_Epoch
     Elevation_Azimuth(epoch).SV(:,1) = Result(epoch).SV(:,1);
     for epoch_sv=1:Epoch_SV_Number(epoch)
         [fElevation, fAzimuth] = elevation_azimuth(RX_Position_XYZ(epoch,:), Result(epoch).SV(epoch_sv,2:4));
-        Elevation_Azimuth(epoch).SV(epoch_sv,2) = rad2deg(fElevation);
-        Elevation_Azimuth(epoch).SV(epoch_sv,3) = rad2deg(fAzimuth);
+        Elevation_Azimuth(epoch).SV(epoch_sv,2) = fElevation;
+        Elevation_Azimuth(epoch).SV(epoch_sv,3) = fAzimuth;
     end
 end
 
@@ -205,19 +208,19 @@ end
 elevation_SV(elevation_SV==0) = nan;
 azimuth_SV(azimuth_SV==0) = nan;
 
-figure;
-plot(elevation_SV,'linewidth',2)
-ylabel('m')
-xlabel('Epoch')
-title('Elevation between RX and SV','fontweight','bold')
-legend(strcat('PRN # ', string(SVTracked)),'Location','BestOutside')
-
-figure;
-plot(azimuth_SV,'linewidth',2)
-ylabel('m')
-xlabel('Epoch')
-title('Azimuth between RX and SV','fontweight','bold')
-legend(strcat('PRN # ', string(SVTracked)),'Location','BestOutside')
+% figure;
+% plot(elevation_SV,'linewidth',2)
+% ylabel('m')
+% xlabel('Epoch')
+% title('Elevation between RX and SV','fontweight','bold')
+% legend(strcat('PRN # ', string(SVTracked)),'Location','BestOutside')
+% 
+% figure;
+% plot(azimuth_SV,'linewidth',2)
+% ylabel('m')
+% xlabel('Epoch')
+% title('Azimuth between RX and SV','fontweight','bold')
+% legend(strcat('PRN # ', string(SVTracked)),'Location','BestOutside')
 
 
 

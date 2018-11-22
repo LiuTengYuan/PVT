@@ -373,8 +373,11 @@ function LATLONButton_Callback(hObject, eventdata, handles)
 
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
 axes(handles.Plot1)
 hold off
@@ -387,7 +390,7 @@ end
 for index = 1 : handles.INDEX
     EpochToPlot = round(length(handles.SV(index).Result_x)/2);
     scatter(rad2deg(handles.SV(index).llh(EpochToPlot,1)),rad2deg(handles.SV(index).llh(EpochToPlot,2)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));  
-    legend('-DynamicLegend')
+    legend('-DynamicLegend','Location','BestOutside')
     hold all
 end
 Legend = get(gca,'Legend');

@@ -86,7 +86,7 @@ for epoch=1:Nb_Epoch
     iUser_NoS = mEpoch(:,3); %user time(NoS)
     iUser_SoW = mEpoch(:,2); %user time(SoW)
     count = 1;
-    for PRN=1:32
+    for PRN=1:length(mTracked(1,:))
         if mTracked(epoch,PRN)==1 %Use mTracked(i,j) to decide if PRN j is tracked at epoch i
             f_C1 = handles.mC1(epoch,PRN); %code range measurement of j satellite at epoch i
             %Select Ephermis (set the best fits SV iPRN at tiem iUser_Nos)
@@ -112,7 +112,7 @@ SV(Total_Nb_Sat) = struct();
 SVTracked = zeros();
 INDEX = 0;
 LastEpochCheck = 1;
-for PRN=1:32
+for PRN=1:length(mTracked(1,:))
     ChangeSV = 1;
     for epoch=1:Nb_Epoch
         if mTracked(epoch,PRN)

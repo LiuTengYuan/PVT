@@ -17,7 +17,7 @@ function [fElevation, fAzimuth] = elevation_azimuth(pos_origine_XYZ, pos_satelli
 
 
 % Direction vector
-XYZw = pos_satellite_XYZ - pos_origine_XYZ;
+XYZw = pos_satellite_XYZ;
 
 % Coordinates of the direction vector in the local reference frame
 dXYZ = delta_wgs84_2_local(XYZw', pos_origine_XYZ');
