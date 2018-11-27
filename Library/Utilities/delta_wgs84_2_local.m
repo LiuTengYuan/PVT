@@ -11,8 +11,8 @@ function [vXYZl, mTRANSF] = delta_wgs84_2_local(vXYZw, vXYZ0)
 %
 % Output Variables
 %   1) vXYZl     coordinates of the vector in local tangent plane (3x1)
-%       vXYZl(1) coordinate in the North direction
-%       vXYZl(2) coordinate in the East direction       
+%       vXYZl(1) coordinate in the East direction
+%       vXYZl(2) coordinate in the North direction       
 %       vXYZl(3) coordinate in the Up direction
 %   2) mTRANSF   transformation matrix (3x3)
 %--------------------------------------------------------------------------
@@ -26,12 +26,18 @@ COSLAT = cos(Posobs(1));
 SINLAT = sin(Posobs(1));
 COSLONG = cos(Posobs(2));
 SINLONG = sin(Posobs(2));
-mTRANSF(1,1) = -SINLAT*COSLONG;
-mTRANSF(1,2) = -SINLAT*SINLONG;
-mTRANSF(1,3) = COSLAT;
-mTRANSF(2,1) = -SINLONG;
-mTRANSF(2,2) = COSLONG;
-mTRANSF(2,3) = 0.0 ;
+% mTRANSF(1,1) = -SINLAT*COSLONG;
+% mTRANSF(1,2) = -SINLAT*SINLONG;
+% mTRANSF(1,3) = COSLAT;
+% mTRANSF(2,1) = -SINLONG;
+% mTRANSF(2,2) = COSLONG;
+% mTRANSF(2,3) = 0.0 ;
+mTRANSF(1,1) = -SINLONG;
+mTRANSF(1,2) = COSLONG;
+mTRANSF(1,3) = 0.0 ;
+mTRANSF(2,1) = -SINLAT*COSLONG;
+mTRANSF(2,2) = -SINLAT*SINLONG;
+mTRANSF(2,3) = COSLAT;
 mTRANSF(3,1) = COSLAT*COSLONG;
 mTRANSF(3,2) = COSLAT*SINLONG ;
 mTRANSF(3,3) = SINLAT;

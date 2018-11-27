@@ -156,8 +156,8 @@ handles.SVTracked = SVTracked;
 %%-------------------------------------------------------------------------
 %% Caculate Receiver Position and Receiver Clock Error
 
-[handles.RX_Position_XYZ, handles.RX_ClockError,handles.Matrix] = RX_Position_and_Clock(Result,handles.mC1,Nb_Epoch,Epoch_SV_Number,handles.HMode);
-[handles.RX_Position_LLH, handles.RX_Position_ENU] = RX_Position_LLH_ENU(handles.RX_Position_XYZ,Nb_Epoch);
+[handles.RX_Position_XYZ, handles.RX_ClockError, handles.Matrix] = RX_Position_and_Clock(Result,handles.mC1,Nb_Epoch,Epoch_SV_Number,handles.HMode);
+[handles.RX_Position_LLH, handles.RX_Position_ENU, handles.Matrix, handles.DOP] = RX_Position_LLH_ENU(handles.RX_Position_XYZ, Nb_Epoch, handles.Matrix);
 
 handles.Result = Result;
 handles.Result_Info = Result_Info;

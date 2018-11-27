@@ -22,7 +22,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 19-Nov-2018 00:03:11
+% Last Modified by GUIDE v2.5 27-Nov-2018 17:39:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -66,9 +66,17 @@ handles.ENAC_llh = [43.564758116,1.48173363,203.8171];
 
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
+axes(handles.ENACLogo)
+[YourImage, ~, ImageAlpha] = imread('ENAC.png');
+image(YourImage, 'AlphaData', ImageAlpha)
+% image(imread('ENAC.png'));
+axis off
 
 % Update handles structure
 guidata(hObject, handles);
@@ -177,7 +185,7 @@ function BrowseNAV_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [handles.filename_n,handles.path_filename_n] = uigetfile('.nav','Select NAVIGATION .nav data file');
-if handles.filename_o
+if handles.filename_n
     set(handles.NAVfile,'String',handles.filename_n);
     handles.path_filename_n = [handles.path_filename_n handles.filename_n];
 else
@@ -212,13 +220,16 @@ function SNRButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
 axes(handles.Plot1)
 hold off
 plot(handles.Tracked_mS1,'linewidth',1)
-ylabel('dB')
+ylabel('dB/Hz')
 xlabel('Epoch')
 title('Signal to Noise Ratio','fontweight','bold')
 legend(strcat('PRN # ', string(find(sum(handles.mS1) ~= 0))),'Location','BestOutside')
@@ -231,8 +242,11 @@ function OrbitsButton_Callback(hObject, eventdata, handles)
 
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
 axes(handles.Plot1)
 hold off
@@ -262,8 +276,11 @@ function PseduoButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
 axes(handles.Plot1)
 hold off
@@ -281,8 +298,11 @@ function CarrierPhaseButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
 axes(handles.Plot1)
 hold off
@@ -299,6 +319,7 @@ function RXENUButtom_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.Plot1,'visible','off');
+cla(handles.Plot1)
 set(handles.Plot2,'visible','on');
 set(handles.Plot3,'visible','on');
 set(handles.Plot4,'visible','on');
@@ -332,13 +353,16 @@ function ElevationButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
 axes(handles.Plot1)
 hold off
 plot(handles.elevation_SV,'linewidth',2)
-ylabel('m')
+ylabel('Degrees')
 xlabel('Epoch')
 title('Elevation between RX and SV','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked)),'Location','BestOutside')
@@ -351,13 +375,16 @@ function AzimuthButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 set(handles.Plot1,'visible','on');
 set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
 set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
 set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
 
 axes(handles.Plot1)
 hold off
 plot(handles.azimuth_SV,'linewidth',2)
-ylabel('m')
+ylabel('Degrees')
 xlabel('Epoch')
 title('Azimuth between RX and SV','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked)),'Location','BestOutside')
@@ -389,18 +416,85 @@ for index = 1 : handles.INDEX
 end
 for index = 1 : handles.INDEX
     EpochToPlot = round(length(handles.SV(index).Result_x)/2);
-    scatter(rad2deg(handles.SV(index).llh(EpochToPlot,1)),rad2deg(handles.SV(index).llh(EpochToPlot,2)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));  
+    scatter(rad2deg(handles.SV(index).llh(EpochToPlot,2)),rad2deg(handles.SV(index).llh(EpochToPlot,1)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));  
     legend('-DynamicLegend','Location','BestOutside')
     hold all
 end
 Legend = get(gca,'Legend');
 Legend = Legend.String;
 for index = 1 : handles.INDEX
-    plot(rad2deg(handles.SV(index).llh(:,1)),rad2deg(handles.SV(index).llh(:,2)),'k.');%,'DisplayName',sprintf("PRN %d", PRN));
+    plot(rad2deg(handles.SV(index).llh(:,2)),rad2deg(handles.SV(index).llh(:,1)),'k.');%,'DisplayName',sprintf("PRN %d", PRN));
     hold on
 end
 grid on
 legend(Legend);
-xlabel('Latitude (degrees)')
-ylabel('Longitude (degrees)')
+xlabel('Longitude (degrees)')
+ylabel('Latitude (degrees)')
 title('Sky Plot Latitude - Longitude','fontweight','bold')
+
+
+% --- Executes on button press in DoPButton.
+function DoPButton_Callback(hObject, eventdata, handles)
+% hObject    handle to DoPButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
+set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
+set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
+
+axes(handles.Plot1)
+hold off
+plot(...
+    [handles.DOP.EDOP; handles.DOP.NDOP; handles.DOP.VDOP; handles.DOP.TDOP].'...
+    ,'linewidth',1);
+hold on
+legend('EDOP','NDOP','VDOP','TDOP')
+title('Dilusion of Precision (considering RMS errors (CS, PD, MP and noise))')
+xlabel('Epoch')
+ylabel('Meters')
+
+% --- Executes on button press in RMSButton.
+function RMSButton_Callback(hObject, eventdata, handles)
+% hObject    handle to RMSButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
+set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
+set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
+
+Sigma_URE = 6; % Depending on CS, PD, MP and noise
+
+RMS_Errors = Sigma_URE * [sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2); ...
+    sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2 + handles.DOP.VDOP.^2);...
+    sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2 + handles.DOP.VDOP.^2 + handles.DOP.TDOP.^2); ...
+    handles.DOP.TDOP];
+
+axes(handles.Plot1)
+hold off
+plot(RMS_Errors.' ,'linewidth',1);
+hold on
+legend('HDOP','PDOP','GDOP','TDOP')
+title('Dilusion of Precision (without considering RMS errors (CS, PD, MP and noise))')
+xlabel('Epoch')
+ylabel('Meters')
+
+% --- Executes on button press in CodeMinusCarrierButton.
+function CodeMinusCarrierButton_Callback(hObject, eventdata, handles)
+% hObject    handle to CodeMinusCarrierButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in PositionScatterButton.
+function PositionScatterButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PositionScatterButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
