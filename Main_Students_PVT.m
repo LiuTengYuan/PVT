@@ -60,8 +60,6 @@ fprintf('\nEnd of reading the RINEX files.\n');
 fprintf('\nEnd of extracting the data.\n');
 
 %%-------------------------------------------------------------------------
-
-
 %% Pseudorange Model
 
 switch handles.PseudorangeModel
@@ -71,6 +69,7 @@ switch handles.PseudorangeModel
 %         mC1 = CODE + CARREIR;
 end
 
+%%-------------------------------------------------------------------------
 %% Compute Transmission Time  &  SV Position and ClockCorrection
 
 global c;
@@ -109,7 +108,7 @@ end
 %% Plot Satellite Orbit
 
 SV(Total_Nb_Sat) = struct();
-SVTracked = zeros();
+handles.SVTracked = zeros();
 INDEX = 0;
 LastEpochCheck = 1;
 for PRN=1:length(mTracked(1,:))
@@ -122,7 +121,7 @@ for PRN=1:length(mTracked(1,:))
             SV(INDEX).Result_x(epoch - FirstEpoch + 1) = Result(epoch).SV(findprn,2); % We have to plot a vector once directly, instead of ploting point by point. Thus, we need to pass from the struct to a vector.
             SV(INDEX).Result_y(epoch - FirstEpoch + 1) = Result(epoch).SV(findprn,3); % In every epoch we have 1 position for each satellite, this forces us to plot point by point and may take several time (Ni plots).
             SV(INDEX).Result_z(epoch - FirstEpoch + 1) = Result(epoch).SV(findprn,4); % So we change rewrite as Ni positions for each satellite, going around all its epochs.
-            SVTracked(INDEX) = PRN;
+            handles.SVTracked(INDEX) = PRN;
         end
     end
     
@@ -132,7 +131,7 @@ axes(handles.Plot1)
 hold off
 for index = 1 : INDEX
         EpochToPlot = round(length(SV(index).Result_x)/2);
-        scatter3(SV(index).Result_x(EpochToPlot)/1000,SV(index).Result_y(EpochToPlot)/1000,SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('SV # ', num2str(SVTracked(index))));
+        scatter3(SV(index).Result_x(EpochToPlot)/1000,SV(index).Result_y(EpochToPlot)/1000,SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('SV # ', num2str(handles.SVTracked(index))));
         legend('-DynamicLegend')
         hold all
 end
@@ -150,48 +149,49 @@ legend(Legend);
 
 handles.SV = SV;
 handles.INDEX = INDEX;
-handles.SVTracked = SVTracked;
-
-
-%%-------------------------------------------------------------------------
-%% Caculate Receiver Position and Receiver Clock Error
-
-[handles.RX_Position_XYZ, handles.RX_ClockError, handles.Matrix] = RX_Position_and_Clock(Result,handles.mC1,Nb_Epoch,Epoch_SV_Number,handles.HMode);
-[handles.RX_Position_LLH, handles.RX_Position_ENU, handles.Matrix, handles.DOP] = RX_Position_LLH_ENU(handles.RX_Position_XYZ, Nb_Epoch, handles.Matrix);
-
-handles.Result = Result;
-handles.Result_Info = Result_Info;
-
-mean_LLH = mean(handles.RX_Position_LLH);
-stdev_LLH = std(handles.RX_Position_LLH);
-mean_ENU = mean(handles.RX_Position_ENU);
-stdev_ENU = std(handles.RX_Position_ENU);
-
-% keyboard
-
+handles.handles.SVTracked = handles.SVTracked;
 
 %%-------------------------------------------------------------------------
 %% Recaculate Tracked_mS1,Tracked_mC1,Tracked_mL1
 
 handles.Tracked_mS1 = zeros(Nb_Epoch,length(handles.SVTracked));
-for num_SV=1:length(SVTracked)
+for num_SV=1:length(handles.SVTracked)
     handles.Tracked_mS1(:,num_SV) = handles.mS1(:,handles.SVTracked(num_SV));
 end
 handles.Tracked_mS1(handles.Tracked_mS1==0) = nan;
 
 handles.Tracked_mC1 = zeros(Nb_Epoch,length(handles.SVTracked));
-for num_SV=1:length(SVTracked)
+for num_SV=1:length(handles.SVTracked)
     handles.Tracked_mC1(:,num_SV) = handles.mC1(:,handles.SVTracked(num_SV));
 end
 handles.Tracked_mC1(handles.Tracked_mC1==0) = nan;
 
 handles.Tracked_mL1 = zeros(Nb_Epoch,length(handles.SVTracked));
-for num_SV=1:length(SVTracked)
+for num_SV=1:length(handles.SVTracked)
     handles.Tracked_mL1(:,num_SV) = handles.mL1(:,handles.SVTracked(num_SV));
 end
 handles.Tracked_mL1(handles.Tracked_mL1==0) = nan;
 
+%%-------------------------------------------------------------------------
+%% Caculate Receiver Position and Receiver Clock Error
 
+Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
+Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
+
+[handles.RX_Position_XYZ, handles.RX_ClockError, handles.Matrix] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[handles.RX_Position_LLH, handles.RX_Position_ENU, handles.Matrix, handles.DOP] = RX_Position_LLH_ENU(handles.RX_Position_XYZ,Nb_Epoch,handles.Matrix);
+
+[handles.RX_Position_XYZ_UW, handles.RX_ClockError_UW, handles.Matrix_UW] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,Epoch_SV_Number,'NLSE',Tiono,Ttropo);
+[handles.RX_Position_LLH_UW, handles.RX_Position_ENU_UW, handles.Matrix_UW, handles.DOP_UW] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_UW,Nb_Epoch,handles.Matrix_UW);
+
+% mean_LLH = mean(handles.RX_Position_LLH);
+% stdev_LLH = std(handles.RX_Position_LLH);
+% mean_ENU = mean(handles.RX_Position_ENU);
+% stdev_ENU = std(handles.RX_Position_ENU);
+
+% keyboard
+
+%%-------------------------------------------------------------------------
 %% Calculate and Plot Elevation & Azimuth
 
 Elevation_Azimuth(Nb_Epoch) = struct();
@@ -204,11 +204,11 @@ for epoch=1:Nb_Epoch
     end
 end
 
-azimuth_SV = zeros(Nb_Epoch,length(SVTracked));
-elevation_SV = zeros(Nb_Epoch,length(SVTracked));
+azimuth_SV = zeros(Nb_Epoch,length(handles.SVTracked));
+elevation_SV = zeros(Nb_Epoch,length(handles.SVTracked));
 for epoch=1:Nb_Epoch
-    for num_SV=1:length(SVTracked)
-        find_SV = find(Elevation_Azimuth(epoch).SV(:,1)==SVTracked(num_SV));
+    for num_SV=1:length(handles.SVTracked)
+        find_SV = find(Elevation_Azimuth(epoch).SV(:,1)==handles.SVTracked(num_SV));
         if find_SV
             elevation_SV(epoch,num_SV) = Elevation_Azimuth(epoch).SV(find_SV,2);
             azimuth_SV(epoch,num_SV) = Elevation_Azimuth(epoch).SV(find_SV,3);
@@ -221,7 +221,13 @@ azimuth_SV(azimuth_SV==0) = nan;
 handles.elevation_SV = elevation_SV;
 handles.azimuth_SV = azimuth_SV;
 
+%%-------------------------------------------------------------------------
+%% Ionosphere Correction & Troposhere Correction
+
+[Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, handles.RX_Position_LLH, mEpoch, Total_Nb_Sat);
+[Ttropo] = Tropospheric_Correction(handles.RX_Position_LLH, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
+[handles.RX_Position_XYZ_IT, handles.RX_ClockError_IT, handles.Matrix_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[handles.RX_Position_LLH_IT, handles.RX_Position_ENU_IT, handles.Matrix_IT, handles.DOP_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_IT,Nb_Epoch,handles.Matrix_IT);
+
+
 end
-
-
-

@@ -27,6 +27,7 @@ function [Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, RX_
 %             ionospheric intersection point (semi-circles)
 %--------------------------------------------------------------------------
 
+global c;
 GPS_time = mEpoch(:,2);
 alpha_n = Iono_a;   beta_n = Iono_b;
 phi_u = deg2rad(RX_Position_LLH(:,1));   lambda_u = deg2rad(RX_Position_LLH(:,2));

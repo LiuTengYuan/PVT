@@ -12,8 +12,8 @@ addpath(genpath('./Library'));
 %%-------------------------------------------------------------------------
 %% Define collected data files to process: .obs & .nav (Rinex 2.11)
 
-% filename_o = './Data/CA548/COM5_180927_195051.obs';
-% filename_n = './Data/CA548/COM5_180927_195051.nav';
+% filename_o = './Data/WalkAround/COM5_181007_175515.obs';
+% filename_n = './Data/WalkAround/COM5_181007_175515.nav';
 
 filename_o = './Data/test/COM44_150205_094639.obs';
 filename_n = './Data/test/COM44_150205_094639.nav';
@@ -140,14 +140,24 @@ end
 grid on
 legend(Legend);
 
-figure;
-plot(mS1);
+% figure;
+% plot(mS1);
 
 %%-------------------------------------------------------------------------
 %% Caculate Receiver Position and Receiver Clock Error
-
-[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,Nb_Epoch,Epoch_SV_Number,'NLSE');
-[RX_Position_LLH, RX_Position_ENU] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch);
+Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
+Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
+[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
+% plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'r.','linewidth',1)
+% hold on
+% [RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,'NLSE',Tiono,Ttropo);
+% [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
+% plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'g.','linewidth',1)
+% legend('NWLSE','NLSE')
+% title('Recevier Position')
+% xlabel('East (m)')
+% ylabel('North (m)')
 
 % figure;
 % plot3(RX_Position_XYZ(:,1),RX_Position_XYZ(:,2),RX_Position_XYZ(:,3),'r.');
@@ -179,6 +189,27 @@ stdev_ENU = std(RX_Position_ENU);
 % figure;
 % plot(RX_Position_ENU(:,3));
 
+%%-------------------------------------------------------------------------
+%% plot error ellispe 
+
+Sigma_URE = 6;
+RMS_Errors = Sigma_URE * [sqrt(DOP.EDOP.^2 + DOP.NDOP.^2); ...
+    sqrt(DOP.EDOP.^2 + DOP.NDOP.^2 + DOP.VDOP.^2);...
+    sqrt(DOP.EDOP.^2 + DOP.NDOP.^2 + DOP.VDOP.^2 + DOP.TDOP.^2); ...
+    DOP.TDOP];
+
+% for epoch=1:Nb_Epoch
+%     PCOV = Matrix(epoch).COV(1:2,1:2);
+%     P_deltaz = Sigma_URE*eye(2);
+%     P_deltap = PCOV*P_deltaz;
+%     [eigenvector,eigenvalue] = eig(inv(P_deltap));
+%     ellipse_angle = atan2(eigenvector(1,2),eigenvector(1,1));
+%     H_ellipse = ellipse(eigenvalue(1,1),eigenvalue(2,2),ellipse_angle...
+%         ,RX_Position_ENU(epoch,1),RX_Position_ENU(epoch,2));
+%     hold on
+%     plot(RX_Position_ENU(epoch,1),RX_Position_ENU(epoch,2),'.','Markersize',5)
+%     hold on
+% end
 
 %%-------------------------------------------------------------------------
 %% Calculate and Plot Elevation & Azimuth
@@ -189,8 +220,8 @@ for epoch=1:Nb_Epoch
     Elevation_Azimuth(epoch).SV(:,1) = Result(epoch).SV(:,1);
     for epoch_sv=1:Epoch_SV_Number(epoch)
         [fElevation, fAzimuth] = elevation_azimuth(RX_Position_XYZ(epoch,:), Result(epoch).SV(epoch_sv,2:4));
-        Elevation_Azimuth(epoch).SV(epoch_sv,2) = fElevation;
-        Elevation_Azimuth(epoch).SV(epoch_sv,3) = fAzimuth;
+        Elevation_Azimuth(epoch).SV(epoch_sv,2) = rad2deg(fElevation);
+        Elevation_Azimuth(epoch).SV(epoch_sv,3) = rad2deg(fAzimuth);
     end
 end
 
@@ -222,9 +253,19 @@ azimuth_SV(azimuth_SV==0) = nan;
 % title('Azimuth between RX and SV','fontweight','bold')
 % legend(strcat('PRN # ', string(SVTracked)),'Location','BestOutside')
 
+%%-------------------------------------------------------------------------
+%% Ionosphere Correction & Troposhere Correction
+
+[Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, RX_Position_LLH, mEpoch, Total_Nb_Sat);
+[Ttropo] = Tropospheric_Correction(RX_Position_LLH, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
+[RX_Position_XYZ_IT, RX_ClockError_IT, Matrix_IT] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[RX_Position_LLH_IT, RX_Position_ENU_IT, Matrix_IT, DOP_IT] = RX_Position_LLH_ENU(RX_Position_XYZ_IT,Nb_Epoch,Matrix_IT);
+plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'r.','linewidth',1)
+hold on
+plot(RX_Position_ENU_IT(:,1),RX_Position_ENU_IT(:,2),'g.','linewidth',1)
+legend('Without Iono & Tropo','With Iono & Tropo')
+title('Recevier Position')
+xlabel('East (m)')
+ylabel('North (m)')
 
 
-
-%test gibhub
-%test again
-% sory professor

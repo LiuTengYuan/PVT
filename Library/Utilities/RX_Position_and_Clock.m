@@ -1,4 +1,4 @@
-function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,Nb_Epoch,Epoch_SV_Number,HMode)
+function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,HMode,Tiono,Ttropo)
 
 % Result = handles.Result;
 % mC1 = handles.mC1;
@@ -19,18 +19,19 @@ for epoch=1:Nb_Epoch
             Pseudorangebar = sqrt((RX_Xbar-SV_X)^2+(RX_Ybar-SV_Y)^2+(RX_Zbar-SV_Z)^2);
             Pseudorange = mC1(epoch,Result(epoch).SV(SV_num,1));
             %Pseudorange = TrueRange + trx_meter - tsv_meter + Ionosphere_delay + Troposphere_delay + Multipath + Noise
-            Pseudorange_difference(SV_num) = Pseudorange-Pseudorangebar+tsv_meter-trx_meter;
+            Pseudorange_difference(SV_num) = Pseudorange-Pseudorangebar+tsv_meter-trx_meter-Tiono(epoch,SV_num)-Ttropo(epoch,SV_num);
             H(SV_num,:) = [(RX_Xbar-SV_X)/Pseudorangebar (RX_Ybar-SV_Y)/Pseudorangebar (RX_Zbar-SV_Z)/Pseudorangebar 1];
         end
         switch HMode
             case 'NLSE'
-%                 W = eye(size(H,2));
+                W = eye(size(H,1));
             case 'NWLSE'
-%                 W = SNR WEIGHTED;
-%                 Matrix(epoch).W = W;
+                SNR_Weighted = mS1(epoch,mS1(epoch,:)~=0);
+                W = diag(SNR_Weighted);
         end
-        Corrected_delta = (H'*H)\H'*Pseudorange_difference;
+        Corrected_delta = (H'*W*H)\H'*W*Pseudorange_difference;
         Matrix(epoch).H = H;
+        Matrix(epoch).W = W;
         
         delta_X = Corrected_delta(1); delta_Y = Corrected_delta(2); delta_Z = Corrected_delta(3);
         delta_trx = Corrected_delta(4);
@@ -46,5 +47,9 @@ for epoch=1:Nb_Epoch
     fprintf("\n RX Position Processig... ");
     fprintf(" \n Total Completed - %.2f %% \n",ProcessingCompleted);
 end
+
+clc
+fprintf("\n SV Position Processing completed. ");
+fprintf("\n RX Position Processing completed. \n");
 
 end

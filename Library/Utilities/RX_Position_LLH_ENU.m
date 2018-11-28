@@ -28,14 +28,13 @@ for epoch=1:Nb_Epoch
     [vXYZl, mTRANSF] = delta_wgs84_2_local(vXYZw', vXYZ0');
     RX_Position_ENU(epoch,:) = vXYZl';
     mTRANSF_extended = [mTRANSF zeros(size(mTRANSF,1),1); zeros(1,size(mTRANSF,2)) 1];
-    G = Matrix(epoch).H*mTRANSF_extended.'; % M x 4 x (4 x 4).' = M x 4 -> By making .' every H entry multiplied by ENU coefficients.
-    Matrix(epoch).COV = inv(G.' * G);
+    G = Matrix(epoch).H*mTRANSF_extended.'; % Mx4x(4x4).'=Mx4->By making.'every H entry multiplied by ENU coefficients.
+    Matrix(epoch).COV = inv(G.' * Matrix(epoch).W * G);
     tmp = sqrt(diag(Matrix(epoch).COV));
     DOP.EDOP(epoch) = tmp(1);
     DOP.NDOP(epoch) = tmp(2);
     DOP.VDOP(epoch) = tmp(3);
     DOP.TDOP(epoch) = tmp(4);
-%     RX_Position_ENU(epoch,[1 2]) = RX_Position_ENU(epoch,[2 1]);
 end
 
 % ---

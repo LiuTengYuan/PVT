@@ -22,7 +22,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 27-Nov-2018 17:39:19
+% Last Modified by GUIDE v2.5 28-Nov-2018 22:14:53
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -78,6 +78,9 @@ image(YourImage, 'AlphaData', ImageAlpha)
 % image(imread('ENAC.png'));
 axis off
 
+axes(handles.Liu)
+imshow('Liu.jpg');
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -94,37 +97,6 @@ function varargout = PVT_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
-
-
-% --- Executes on selection change in HSelection.
-function HSelection_Callback(hObject, eventdata, handles)
-% hObject    handle to HSelection (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns HSelection contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from HSelection
-string = get(handles.HSelection,'String');
-value = get(handles.HSelection,'Value');
-switch(value)
-    case 1
-        handles.HMode = 'NLSE';
-    case 2
-        handles.HMode = 'NWLSE';
-end
-guidata(hObject,handles);
-
-% --- Executes during object creation, after setting all properties.
-function HSelection_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to HSelection (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 
 % --- Executes on selection change in PseudorangeModelSelection.
@@ -201,7 +173,6 @@ function RunButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Run Main
-HSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
 PseudorangeModelSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
@@ -498,3 +469,51 @@ function PositionScatterButton_Callback(hObject, eventdata, handles)
 % hObject    handle to PositionScatterButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in RX_Position_WLSE.
+function RX_Position_WLSE_Callback(hObject, eventdata, handles)
+% hObject    handle to RX_Position_WLSE (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
+set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
+set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
+
+axes(handles.Plot1)
+hold off
+plot(handles.RX_Position_ENU_UW(:,1),handles.RX_Position_ENU_UW(:,2),'g.','linewidth',1)
+hold on
+plot(handles.RX_Position_ENU(:,1),handles.RX_Position_ENU(:,2),'r.','linewidth',1);
+legend('NLSE','NWLSE')
+title('Recevier Position(NLSE & NWLSE)')
+xlabel('East (m)')
+ylabel('North (m)')
+
+
+% --- Executes on button press in RX_Position_IonoTropo.
+function RX_Position_IonoTropo_Callback(hObject, eventdata, handles)
+% hObject    handle to RX_Position_IonoTropo (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+set(handles.Plot1,'visible','on');
+set(handles.Plot2,'visible','off');
+cla(handles.Plot2);
+set(handles.Plot3,'visible','off');
+cla(handles.Plot3);
+set(handles.Plot4,'visible','off');
+cla(handles.Plot4);
+
+axes(handles.Plot1)
+hold off
+plot(handles.RX_Position_ENU(:,1),handles.RX_Position_ENU(:,2),'g.','linewidth',1)
+hold on
+plot(handles.RX_Position_ENU_IT(:,1),handles.RX_Position_ENU_IT(:,2),'r.','linewidth',1);
+legend('Without Iono & Tropo','With Iono & Tropo')
+title('Recevier Position(Without_IonoTropo & With_InonTropo)')
+xlabel('East (m)')
+ylabel('North (m)')
