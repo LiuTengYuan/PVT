@@ -59,6 +59,22 @@ fprintf('\nEnd of reading the RINEX files.\n');
 [mEpoch, Nb_Epoch, vNb_Sat, Total_Nb_Sat, mTracked, handles.mC1, handles.mL1, handles.mD1, handles.mS1]=ExtractData_O(DATA_O, nEpoch_max);
 fprintf('\nEnd of extracting the data.\n');
 
+%There exist some epochs that can receive the satellite data yet cannot
+%receive the ephemeris data
+for epoch=1:Nb_Epoch
+    redundant_SV = setdiff(find(mTracked(epoch,:)~=0),Ephem(:,1));
+    %redundant_SV is the satellite that is in mTracked yet not in Ephem
+    if redundant_SV
+    vNb_Sat(epoch) = vNb_Sat(epoch)-length(setdiff(find(mTracked(epoch,:)~=0),Ephem(:,1)));
+    mTracked(epoch,redundant_SV) = 0;
+    handles.mC1(epoch,redundant_SV) = 0;
+    handles.mL1(epoch,redundant_SV) = 0;
+    handles.mD1(epoch,redundant_SV) = 0;
+    handles.mS1(epoch,redundant_SV) = 0;
+    end
+end
+Total_Nb_Sat = length(find(sum(mTracked)~=0));
+
 %%-------------------------------------------------------------------------
 %% Pseudorange Model
 
@@ -66,7 +82,7 @@ switch handles.PseudorangeModel
     case 'Code'
         mC1 = mC1;
     case 'CodeAndCarrier'
-%         mC1 = CODE + CARREIR;
+        %         mC1 = CODE + CARREIR;
 end
 
 %%-------------------------------------------------------------------------
@@ -74,13 +90,11 @@ end
 
 global c;
 Result(Nb_Epoch) = struct(); % This way automatically allocate memory for all Nb_Epoch structures.
-Result_Info(Nb_Epoch) = struct(); 
-Epoch_SV_Number = zeros(Nb_Epoch,1); %the number of satellite for every epoch
+Result_Info(Nb_Epoch) = struct();
 
 Titles = {'SV # PRN','SV_X','SV_Y','SV_Z','SV_ClockError_second','SV_ClockError_meter'};
 
 for epoch=1:Nb_Epoch
-    Epoch_SV_Number(epoch) = sum(mTracked(epoch,:));
     Result_Info(epoch).INFO = Titles;
     iUser_NoS = mEpoch(:,3); %user time(NoS)
     iUser_SoW = mEpoch(:,2); %user time(SoW)
@@ -110,7 +124,6 @@ end
 SV(Total_Nb_Sat) = struct();
 handles.SVTracked = zeros();
 INDEX = 0;
-LastEpochCheck = 1;
 for PRN=1:length(mTracked(1,:))
     ChangeSV = 1;
     for epoch=1:Nb_Epoch
@@ -130,10 +143,10 @@ end
 axes(handles.Plot1)
 hold off
 for index = 1 : INDEX
-        EpochToPlot = round(length(SV(index).Result_x)/2);
-        scatter3(SV(index).Result_x(EpochToPlot)/1000,SV(index).Result_y(EpochToPlot)/1000,SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('SV # ', num2str(handles.SVTracked(index))));
-        legend('-DynamicLegend')
-        hold all
+    EpochToPlot = round(length(SV(index).Result_x)/2);
+    scatter3(SV(index).Result_x(EpochToPlot)/1000,SV(index).Result_y(EpochToPlot)/1000,SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('SV # ', num2str(handles.SVTracked(index))));
+    legend('-DynamicLegend')
+    hold all
 end
 Legend = get(gca,'Legend');
 Legend = Legend.String;
@@ -178,10 +191,10 @@ handles.Tracked_mL1(handles.Tracked_mL1==0) = nan;
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
 
-[handles.RX_Position_XYZ, handles.RX_ClockError, handles.Matrix] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[handles.RX_Position_XYZ, handles.RX_ClockError, handles.Matrix] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',Tiono,Ttropo);
 [handles.RX_Position_LLH, handles.RX_Position_ENU, handles.Matrix, handles.DOP] = RX_Position_LLH_ENU(handles.RX_Position_XYZ,Nb_Epoch,handles.Matrix);
 
-[handles.RX_Position_XYZ_UW, handles.RX_ClockError_UW, handles.Matrix_UW] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,Epoch_SV_Number,'NLSE',Tiono,Ttropo);
+[handles.RX_Position_XYZ_UW, handles.RX_ClockError_UW, handles.Matrix_UW] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',Tiono,Ttropo);
 [handles.RX_Position_LLH_UW, handles.RX_Position_ENU_UW, handles.Matrix_UW, handles.DOP_UW] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_UW,Nb_Epoch,handles.Matrix_UW);
 
 % mean_LLH = mean(handles.RX_Position_LLH);
@@ -197,7 +210,7 @@ Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
 Elevation_Azimuth(Nb_Epoch) = struct();
 for epoch=1:Nb_Epoch
     Elevation_Azimuth(epoch).SV(:,1) = Result(epoch).SV(:,1);
-    for epoch_sv=1:Epoch_SV_Number(epoch)
+    for epoch_sv=1:vNb_Sat(epoch)
         [fElevation, fAzimuth] = elevation_azimuth(handles.RX_Position_XYZ(epoch,:), Result(epoch).SV(epoch_sv,2:4));
         Elevation_Azimuth(epoch).SV(epoch_sv,2) = rad2deg(fElevation);
         Elevation_Azimuth(epoch).SV(epoch_sv,3) = rad2deg(fAzimuth);
@@ -226,7 +239,7 @@ handles.azimuth_SV = azimuth_SV;
 
 [Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, handles.RX_Position_LLH, mEpoch, Total_Nb_Sat);
 [Ttropo] = Tropospheric_Correction(handles.RX_Position_LLH, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
-[handles.RX_Position_XYZ_IT, handles.RX_ClockError_IT, handles.Matrix_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[handles.RX_Position_XYZ_IT, handles.RX_ClockError_IT, handles.Matrix_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',Tiono,Ttropo);
 [handles.RX_Position_LLH_IT, handles.RX_Position_ENU_IT, handles.Matrix_IT, handles.DOP_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_IT,Nb_Epoch,handles.Matrix_IT);
 
 

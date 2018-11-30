@@ -1,4 +1,4 @@
-function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,HMode,Tiono,Ttropo)
+function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,Tiono,Ttropo)
 
 % Result = handles.Result;
 % mC1 = handles.mC1;
@@ -9,11 +9,11 @@ Matrix = struct();
 for epoch=1:Nb_Epoch
     RX_Xbar = 0; RX_Ybar = 0; RX_Zbar = 0; trx_meter = 0;
     delta_X = 1; delta_Y = 1; delta_Z = 1; delta_trx = 1;
-    H = zeros(Epoch_SV_Number(epoch),4);
+    H = zeros(vNb_Sat(epoch),4);
     cc = 0;
-    Pseudorange_difference = zeros(Epoch_SV_Number(epoch),1);
+    Pseudorange_difference = zeros(vNb_Sat(epoch),1);
     while (abs(delta_X) > 0.0001 || abs(delta_Y) > 0.0001 || abs(delta_Z) > 0.0001) % norm(Corrected_delta(1:3))
-        for SV_num = 1:Epoch_SV_Number(epoch)
+        for SV_num = 1:vNb_Sat(epoch)
             SV_X = Result(epoch).SV(SV_num,2); SV_Y = Result(epoch).SV(SV_num,3); SV_Z = Result(epoch).SV(SV_num,4);
             tsv_meter = Result(epoch).SV(SV_num,6);
             Pseudorangebar = sqrt((RX_Xbar-SV_X)^2+(RX_Ybar-SV_Y)^2+(RX_Zbar-SV_Z)^2);

@@ -22,7 +22,7 @@ vEphemeris = [];
 PRN_EphemList = []; PRN_EphemList = find(Ephem(:,1)==iPRN);
 %k = find(X) returns a vector containing the linear indices of each nonzero element in array X.
 if isempty(PRN_EphemList)
-    printf('\nNo navigation data recorded for PRN %d.\n',iPRN);
+    fprintf('\nNo navigation data recorded for PRN %d.\n',iPRN);
     return,
 else
     % Select the best fitting ephemeris: ephemeris with TOE that is

@@ -12,11 +12,14 @@ addpath(genpath('./Library'));
 %%-------------------------------------------------------------------------
 %% Define collected data files to process: .obs & .nav (Rinex 2.11)
 
-% filename_o = './Data/WalkAround/COM5_181007_175515.obs';
-% filename_n = './Data/WalkAround/COM5_181007_175515.nav';
+filename_o = './Data/GYM/COM5_181004_125632.obs';
+filename_n = './Data/GYM/COM5_181004_125632.nav';
 
-filename_o = './Data/test/COM44_150205_094639.obs';
-filename_n = './Data/test/COM44_150205_094639.nav';
+% filename_o = './Data/Main Hall/COM6_181001_071919.obs';
+% filename_n = './Data/Main Hall/COM6_181001_071919.nav';
+
+% filename_o = './Data/test/COM44_150205_094639.obs';
+% filename_n = './Data/test/COM44_150205_094639.nav';
 ref_pos = [4627537.2739   119698.4035  4373317.5742];
 ref_LLA = f_xyz_2_llh(ref_pos);
 
@@ -62,18 +65,34 @@ fprintf('\nEnd of reading the RINEX files.\n');
 [mEpoch, Nb_Epoch, vNb_Sat, Total_Nb_Sat, mTracked, mC1, mL1, mD1, mS1]=ExtractData_O(DATA_O, nEpoch_max);
 fprintf('\nEnd of extracting the data.\n');
 
+%There exist some epochs that can receive the satellite data yet cannot
+%receive the ephemeris data
+for epoch=1:Nb_Epoch
+    redundant_SV = setdiff(find(mTracked(epoch,:)~=0),Ephem(:,1));
+    %redundant_SV is the satellite that is in mTracked yet not in Ephem
+    if redundant_SV
+    vNb_Sat(epoch) = vNb_Sat(epoch)-length(setdiff(find(mTracked(epoch,:)~=0),Ephem(:,1)));
+    mTracked(epoch,redundant_SV) = 0;
+    mC1(epoch,redundant_SV) = 0;
+    mL1(epoch,redundant_SV) = 0;
+    mD1(epoch,redundant_SV) = 0;
+    mS1(epoch,redundant_SV) = 0;
+    end
+end
+Total_Nb_Sat = length(find(sum(mTracked)~=0));
+
+
+
 %%-------------------------------------------------------------------------
 %% Compute Transmission Time  &  SV Position and ClockCorrection
 
 global c;
 Result(Nb_Epoch) = struct(); % This way automatically allocate memory for all Nb_Epoch structures.
 Result_Info(Nb_Epoch) = struct();
-Epoch_SV_Number = zeros(Nb_Epoch,1); %the number of satellite for every epoch
 
 Titles = {'SV # PRN','SV_X','SV_Y','SV_Z','SV_ClockError_second','SV_ClockError_meter'};
 
 for epoch=1:Nb_Epoch
-    Epoch_SV_Number(epoch) = sum(mTracked(epoch,:));
     Result_Info(epoch).INFO = Titles;
     iUser_NoS = mEpoch(:,3); %user time(NoS)
     iUser_SoW = mEpoch(:,2); %user time(SoW)
@@ -103,7 +122,6 @@ end
 SV = struct();
 SVTracked = zeros();
 INDEX = 0;
-LastEpochCheck = 1;
 for PRN=1:length(mTracked(1,:))
     ChangeSV = 1;
     for epoch=1:Nb_Epoch
@@ -147,11 +165,11 @@ legend(Legend);
 %% Caculate Receiver Position and Receiver Clock Error
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
-[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',Tiono,Ttropo);
 [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
 % plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'r.','linewidth',1)
 % hold on
-% [RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,'NLSE',Tiono,Ttropo);
+% [RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NLSE',Tiono,Ttropo);
 % [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
 % plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'g.','linewidth',1)
 % legend('NWLSE','NLSE')
@@ -190,7 +208,7 @@ stdev_ENU = std(RX_Position_ENU);
 % plot(RX_Position_ENU(:,3));
 
 %%-------------------------------------------------------------------------
-%% plot error ellispe 
+%% plot error ellispe ???????????????????????????????????????????????????
 
 Sigma_URE = 6;
 RMS_Errors = Sigma_URE * [sqrt(DOP.EDOP.^2 + DOP.NDOP.^2); ...
@@ -218,7 +236,7 @@ clear Elevation_Azimuth;
 Elevation_Azimuth(Nb_Epoch) = struct();
 for epoch=1:Nb_Epoch
     Elevation_Azimuth(epoch).SV(:,1) = Result(epoch).SV(:,1);
-    for epoch_sv=1:Epoch_SV_Number(epoch)
+    for epoch_sv=1:vNb_Sat(epoch)
         [fElevation, fAzimuth] = elevation_azimuth(RX_Position_XYZ(epoch,:), Result(epoch).SV(epoch_sv,2:4));
         Elevation_Azimuth(epoch).SV(epoch_sv,2) = rad2deg(fElevation);
         Elevation_Azimuth(epoch).SV(epoch_sv,3) = rad2deg(fAzimuth);
@@ -245,7 +263,7 @@ azimuth_SV(azimuth_SV==0) = nan;
 % xlabel('Epoch')
 % title('Elevation between RX and SV','fontweight','bold')
 % legend(strcat('PRN # ', string(SVTracked)),'Location','BestOutside')
-% 
+%
 % figure;
 % plot(azimuth_SV,'linewidth',2)
 % ylabel('m')
@@ -258,14 +276,15 @@ azimuth_SV(azimuth_SV==0) = nan;
 
 [Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, RX_Position_LLH, mEpoch, Total_Nb_Sat);
 [Ttropo] = Tropospheric_Correction(RX_Position_LLH, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
-[RX_Position_XYZ_IT, RX_ClockError_IT, Matrix_IT] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,Epoch_SV_Number,'NWLSE',Tiono,Ttropo);
+[RX_Position_XYZ_IT, RX_ClockError_IT, Matrix_IT] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',Tiono,Ttropo);
 [RX_Position_LLH_IT, RX_Position_ENU_IT, Matrix_IT, DOP_IT] = RX_Position_LLH_ENU(RX_Position_XYZ_IT,Nb_Epoch,Matrix_IT);
-plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'r.','linewidth',1)
-hold on
-plot(RX_Position_ENU_IT(:,1),RX_Position_ENU_IT(:,2),'g.','linewidth',1)
-legend('Without Iono & Tropo','With Iono & Tropo')
-title('Recevier Position')
-xlabel('East (m)')
-ylabel('North (m)')
+% figure
+% plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'g.','linewidth',1)
+% hold on
+% plot(RX_Position_ENU_IT(:,1),RX_Position_ENU_IT(:,2),'r.','linewidth',1)
+% legend('Without Iono & Tropo','With Iono & Tropo')
+% title('Recevier Position')
+% xlabel('East (m)')
+% ylabel('North (m)')
 
 
