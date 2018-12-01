@@ -162,7 +162,7 @@ legend(Legend);
 % plot(mS1);
 
 %%-------------------------------------------------------------------------
-%% Caculate Receiver Position and Receiver Clock Error
+%% Receiver Position and Receiver Clock Error
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
 [RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',Tiono,Ttropo);
@@ -286,5 +286,12 @@ azimuth_SV(azimuth_SV==0) = nan;
 % title('Recevier Position')
 % xlabel('East (m)')
 % ylabel('North (m)')
+
+%%-------------------------------------------------------------------------
+%% Receiver Velocity and Receiver Clock Error Rate
+
+% new Rseult & new Result_Info (SV Velocity and Clock Correction Rate)
+[Result, Result_Info] = SV_Velocity_and_ClockCorrectionRate(Result,Result_Info,mTracked,SVTracked);
+[RX_Velocity_XYZ, RX_ClockErrorRate] = RX_Velocity_and_Clock_Rate(Result,mD1,Nb_Epoch,vNb_Sat,Matrix_IT);
 
 

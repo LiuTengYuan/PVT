@@ -109,8 +109,9 @@ zk = yko*sin(ik);
 %Now we have to calculate the SV positon at receiver time in ECEF(changed)
 theta = OmegaEDot*(iUser_SoW-iT_SV+delta_tr);
 R_ECEF2ECI = [cos(theta) -sin(theta) 0;sin(theta) cos(theta) 0;0 0 1];
+R_ECI2ECEF = inv(R_ECEF2ECI);
 SV_Pos_ECI = [xk;yk;zk];
-SV_Pos_ECEF = R_ECEF2ECI\SV_Pos_ECI; % = inv(R_ECEF2ECI)*SV_Pos_ECI
+SV_Pos_ECEF = R_ECI2ECEF*SV_Pos_ECI; % = inv(R_ECEF2ECI)*SV_Pos_ECI
 %x = A\b is computed differently than x = inv(A)*b and is recommended for solving systems of linear equations.
 
 vSatellite_xyz = SV_Pos_ECEF.'; %B = A.' -> B = transpose(A)
