@@ -2,6 +2,7 @@ function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,
 
 % Result = handles.Result;
 % mC1 = handles.mC1;
+% HMode = 'NWLSE';
 
 RX_Position_XYZ = zeros(Nb_Epoch,3);
 RX_ClockError = zeros(Nb_Epoch,1);

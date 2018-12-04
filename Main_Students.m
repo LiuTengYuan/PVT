@@ -12,14 +12,14 @@ addpath(genpath('./Library'));
 %%-------------------------------------------------------------------------
 %% Define collected data files to process: .obs & .nav (Rinex 2.11)
 
-filename_o = './Data/GYM/COM5_181004_125632.obs';
-filename_n = './Data/GYM/COM5_181004_125632.nav';
+% filename_o = './Data/GYM/COM5_181004_125632.obs';
+% filename_n = './Data/GYM/COM5_181004_125632.nav';
 
 % filename_o = './Data/Main Hall/COM6_181001_071919.obs';
 % filename_n = './Data/Main Hall/COM6_181001_071919.nav';
 
-% filename_o = './Data/test/COM44_150205_094639.obs';
-% filename_n = './Data/test/COM44_150205_094639.nav';
+filename_o = './Data/test/COM44_150205_094639.obs';
+filename_n = './Data/test/COM44_150205_094639.nav';
 ref_pos = [4627537.2739   119698.4035  4373317.5742];
 ref_LLA = f_xyz_2_llh(ref_pos);
 
