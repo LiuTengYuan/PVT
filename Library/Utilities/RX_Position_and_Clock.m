@@ -1,8 +1,7 @@
-function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,Tiono,Ttropo)
+function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,WType,Tiono,Ttropo,CallNumber,SVLLH,RXLLH,SVTracked)
 
 % Result = handles.Result;
 % mC1 = handles.mC1;
-% HMode = 'NWLSE';
 
 RX_Position_XYZ = zeros(Nb_Epoch,3);
 RX_ClockError = zeros(Nb_Epoch,1);
@@ -13,6 +12,7 @@ for epoch=1:Nb_Epoch
     H = zeros(vNb_Sat(epoch),4);
     Pseudorange_difference = zeros(vNb_Sat(epoch),1);
     while (abs(delta_X) > 0.0001 || abs(delta_Y) > 0.0001 || abs(delta_Z) > 0.0001) % norm(Corrected_delta(1:3))
+        weights = 0;
         for SV_num = 1:vNb_Sat(epoch)
             SV_X = Result(epoch).SV(SV_num,2); SV_Y = Result(epoch).SV(SV_num,3); SV_Z = Result(epoch).SV(SV_num,4);
             tsv_meter = Result(epoch).SV(SV_num,6);
@@ -21,6 +21,16 @@ for epoch=1:Nb_Epoch
             %Pseudorange = TrueRange + trx_meter - tsv_meter + Ionosphere_delay + Troposphere_delay + Multipath + Noise
             Pseudorange_difference(SV_num) = Pseudorange-Pseudorangebar+tsv_meter-trx_meter-Tiono(epoch,SV_num)-Ttropo(epoch,SV_num);
             H(SV_num,:) = [(RX_Xbar-SV_X)/Pseudorangebar (RX_Ybar-SV_Y)/Pseudorangebar (RX_Zbar-SV_Z)/Pseudorangebar 1];
+            if CallNumber > 1
+                if strcmp(WType,'SNR + SV GEO')
+                    prn = find(SVTracked == Result(epoch).SV(SV_num,1));
+                    % 1 - 15    index 1 - 15              1 - 32
+                    weights(SV_num) = 1/norm(SVLLH(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
+                else
+                    weights(SV_num) = 1;
+                end
+            end
+            
         end
         switch HMode
             case 'NLSE'
@@ -29,7 +39,7 @@ for epoch=1:Nb_Epoch
                 %??????????????????????????????????????????????????????
                 %Measurement Error Covariance Matrix(Cp)
                 %W = inv(Cp)
-                SNR_Weighted = mS1(epoch,mS1(epoch,:)~=0);
+                SNR_Weighted = mS1(epoch,mS1(epoch,:)~=0) .* weights;
                 W = diag(SNR_Weighted);
         end
         Corrected_delta = (H'*W*H)\H'*W*Pseudorange_difference;
@@ -47,7 +57,7 @@ for epoch=1:Nb_Epoch
     ProcessingCompleted = epoch/(Nb_Epoch)*100;
     fprintf("\n SV Position Processing completed. ");
     fprintf("\n RX Position Processig... ");
-    fprintf(" \n Total Completed - %.2f %% \n",ProcessingCompleted);
+    fprintf(" \n Total Completed - %.2f , Call %d out of %d. %% \n",ProcessingCompleted, CallNumber, 4);
 end
 
 clc
