@@ -1,5 +1,3 @@
-
-
 clc;
 clear;
 close all;
@@ -165,7 +163,7 @@ legend(Legend);
 %% Receiver Position and Receiver Clock Error
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
-[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',Tiono,Ttropo);
+[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',[],Tiono,Ttropo,1,SV,[],SVTracked);
 [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
 % plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'r.','linewidth',1)
 % hold on

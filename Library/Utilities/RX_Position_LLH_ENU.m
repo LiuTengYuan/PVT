@@ -25,8 +25,9 @@ RX_Position_ENU = zeros(Nb_Epoch,3);
 vXYZ0 = mean_XYZ;
 for epoch=1:Nb_Epoch
     vXYZw = RX_Position_XYZ(epoch,:);
-    [vXYZl, mTRANSF] = delta_wgs84_2_local(vXYZw', vXYZ0');
-    RX_Position_ENU(epoch,:) = vXYZl';
+    vXYZw_dir = vXYZw-vXYZ0;
+    [vXYZl, mTRANSF] = delta_wgs84_2_local(vXYZw_dir', vXYZ0');
+    RX_Position_ENU(epoch,:) = [vXYZl(2) vXYZl(1) vXYZl(3)];
     mTRANSF_extended = [mTRANSF zeros(size(mTRANSF,1),1); zeros(1,size(mTRANSF,2)) 1];
     G = Matrix(epoch).H*mTRANSF_extended.'; % Mx4x(4x4).'=Mx4->By making.'every H entry multiplied by ENU coefficients.
     Matrix(epoch).COV = inv(G.' * Matrix(epoch).W * G);
