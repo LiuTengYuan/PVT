@@ -12,7 +12,7 @@ for epoch=1:Nb_Epoch
     H = zeros(vNb_Sat(epoch),4);
     Pseudorange_difference = zeros(vNb_Sat(epoch),1);
     while (abs(delta_X) > 0.0001 || abs(delta_Y) > 0.0001 || abs(delta_Z) > 0.0001) % norm(Corrected_delta(1:3))
-        weights = 0;
+        weights = zeros(1,vNb_Sat(epoch));
         for SV_num = 1:vNb_Sat(epoch)
             SV_X = Result(epoch).SV(SV_num,2); SV_Y = Result(epoch).SV(SV_num,3); SV_Z = Result(epoch).SV(SV_num,4);
             tsv_meter = Result(epoch).SV(SV_num,6);
@@ -23,9 +23,9 @@ for epoch=1:Nb_Epoch
             H(SV_num,:) = [(RX_Xbar-SV_X)/Pseudorangebar (RX_Ybar-SV_Y)/Pseudorangebar (RX_Zbar-SV_Z)/Pseudorangebar 1];
             if CallNumber > 1
                 if strcmp(WType,'SNR + SV GEO')
-                    prn = find(SVTracked == Result(epoch).SV(SV_num,1));
-                    % 1 - 15    index 1 - 15              1 - 32
-                    weights(SV_num) = 1/norm(SVLLH(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
+                    prn = (SVTracked == Result(epoch).SV(SV_num,1));
+                    weights(SV_num) = 1/norm(SVLLH(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); 
+                    % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
                 else
                     weights(SV_num) = 1;
                 end

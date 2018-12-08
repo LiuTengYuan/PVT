@@ -117,29 +117,32 @@ end
 %%-------------------------------------------------------------------------
 %% Plot Satellite Orbit
 
-SV = struct();
-SVTracked = zeros();
-INDEX = 0;
-for PRN=1:length(mTracked(1,:))
-    ChangeSV = 1;
+SVTracked = find(sum(mTracked)~=0);
+
+SV(Total_Nb_Sat) = struct();
+index = 0;
+for PRN=SVTracked
+    index = index + 1;
+    SV(index).PRN = PRN;
     for epoch=1:Nb_Epoch
+        INDEX = find(Result(epoch).SV(:,1) == PRN);
         if mTracked(epoch,PRN)
-            if ChangeSV, INDEX = INDEX + 1; FirstEpoch = epoch; ChangeSV = 0; end
-            
-            findprn = find(Result(epoch).SV(:,1)==PRN);
-            SV(INDEX).Result_x(epoch - FirstEpoch + 1) = Result(epoch).SV(findprn,2);
-            SV(INDEX).Result_y(epoch - FirstEpoch + 1) = Result(epoch).SV(findprn,3);
-            SV(INDEX).Result_z(epoch - FirstEpoch + 1) = Result(epoch).SV(findprn,4);
-            % We have to plot a vector once directly, instead of ploting point by point. Thus, we need to pass from the struct to a vector.
-            % In every epoch we have 1 position for each satellite, this forces us to plot point by point and may take several time (Ni plots).
-            % So we change rewrite as Ni positions for each satellite, going around all its epochs.
-            SVTracked(INDEX) = PRN;
+            SV(index).Result_x(epoch) = Result(epoch).SV(INDEX,2); % We have to plot a vector once directly, instead of ploting point by point. Thus, we need to pass from the struct to a vector.
+            SV(index).Result_y(epoch) = Result(epoch).SV(INDEX,3); % In every epoch we have 1 position for each satellite, this forces us to plot point by point and may take several time (Ni plots).
+            SV(index).Result_z(epoch) = Result(epoch).SV(INDEX,4); % So we change rewrite as Ni positions for each satellite, going around all its epochs.
+        else
+            SV(index).Result_x(epoch) = NaN; % We have to plot a vector once directly, instead of ploting point by point. Thus, we need to pass from the struct to a vector.
+            SV(index).Result_y(epoch) = NaN; % In every epoch we have 1 position for each satellite, this forces us to plot point by point and may take several time (Ni plots).
+            SV(index).Result_z(epoch) = NaN;
         end
     end
     
 end
-for index = 1 : INDEX
-    EpochToPlot = round(length(SV(index).Result_x)/2);
+
+hold off
+for index = 1 : length(SVTracked)
+    EpochToPlotIndex = find(mTracked(:,SVTracked(index)) ~= 0 );
+    EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
     scatter3(SV(index).Result_x(EpochToPlot)/1000,SV(index).Result_y(EpochToPlot)/1000,SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('SV # ', num2str(SVTracked(index))));
     legend('-DynamicLegend')
     hold all
@@ -148,62 +151,35 @@ Legend = get(gca,'Legend');
 Legend = Legend.String;
 earth_sphere("km")
 hold on
-for index = 1 : INDEX
-    plot3(SV(index).Result_x/1000,SV(index).Result_y/1000,SV(index).Result_z/1000,'k.');
-    %,'DisplayName',sprintf("PRN %d", PRN));
+for index = 1 : length(SVTracked)
+    plot3(SV(index).Result_x/1000,SV(index).Result_y/1000,SV(index).Result_z/1000,'k.');%,'DisplayName',sprintf("PRN %d", PRN));
     hold on
 end
 grid on
+title('Satellites orbits during data collection','fontweight','bold')
 legend(Legend);
 
-% figure;
-% plot(mS1);
+
 
 %%-------------------------------------------------------------------------
 %% Receiver Position and Receiver Clock Error
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
-[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',[],Tiono,Ttropo,1,SV,[],SVTracked);
+[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',[],Tiono,Ttropo,2,[],[],SVTracked);
 [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
-% plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'r.','linewidth',1)
-% hold on
-% [RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NLSE',Tiono,Ttropo);
-% [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
-% plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'g.','linewidth',1)
-% legend('NWLSE','NLSE')
-% title('Recevier Position')
-% xlabel('East (m)')
-% ylabel('North (m)')
-
-% figure;
-% plot3(RX_Position_XYZ(:,1),RX_Position_XYZ(:,2),RX_Position_XYZ(:,3),'r.');
-% grid on;
-% figure;
-% plot(iUser_NoS,RX_ClockError);
-% figure;
-% plot(iUser_NoS,RX_Position_XYZ(:,1));
-% figure;
-% plot(iUser_NoS,RX_Position_XYZ(:,2));
-% figure;
-% plot(iUser_NoS,RX_Position_XYZ(:,3));
-
-% figure;
-% plot(iUser_NoS,RX_Position_LLH(:,1));
-% figure;
-% plot(iUser_NoS,RX_Position_LLH(:,2));
-% figure;
-% plot(iUser_NoS,RX_Position_LLH(:,3));
 
 mean_LLH = mean(RX_Position_LLH);
 stdev_LLH = std(RX_Position_LLH);
 mean_ENU = mean(RX_Position_ENU);
 stdev_ENU = std(RX_Position_ENU);
-% figure;
-% plot(RX_Position_ENU(:,1));
-% figure;
-% plot(RX_Position_ENU(:,2));
-% figure;
-% plot(RX_Position_ENU(:,3));
+
+for epoch = 1 : Nb_Epoch
+    for index = 1 : length(SVTracked)
+        [SV(index).llh(epoch,:)] = xyz_2_lla_PVT( [SV(index).Result_x(epoch), SV(index).Result_y(epoch), SV(index).Result_z(epoch)] );
+        SV(index).llh(epoch,1) = rad2deg(SV(index).llh(epoch,1));
+        SV(index).llh(epoch,2) = rad2deg(SV(index).llh(epoch,2));
+    end
+end
 
 %%-------------------------------------------------------------------------
 %% plot error ellispe ???????????????????????????????????????????????????
@@ -274,19 +250,11 @@ azimuth_SV(azimuth_SV==0) = nan;
 
 [Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, RX_Position_LLH, mEpoch, Total_Nb_Sat);
 [Ttropo] = Tropospheric_Correction(RX_Position_LLH, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
-[RX_Position_XYZ_IT, RX_ClockError_IT, Matrix_IT] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',Tiono,Ttropo);
+[RX_Position_XYZ_IT, RX_ClockError_IT, Matrix_IT] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',[],Tiono,Ttropo,2,[],[],SVTracked);
 [RX_Position_LLH_IT, RX_Position_ENU_IT, Matrix_IT, DOP_IT] = RX_Position_LLH_ENU(RX_Position_XYZ_IT,Nb_Epoch,Matrix_IT);
-% figure
-% plot(RX_Position_ENU(:,1),RX_Position_ENU(:,2),'g.','linewidth',1)
-% hold on
-% plot(RX_Position_ENU_IT(:,1),RX_Position_ENU_IT(:,2),'r.','linewidth',1)
-% legend('Without Iono & Tropo','With Iono & Tropo')
-% title('Recevier Position')
-% xlabel('East (m)')
-% ylabel('North (m)')
 
 %%-------------------------------------------------------------------------
-%% Receiver Velocity and Receiver Clock Error Rate
+%% Receiver Velocity and Receiver Clock Error Rate ???????????????????????
 
 % new Rseult & new Result_Info (SV Velocity and Clock Correction Rate)
 [Result, Result_Info] = SV_Velocity_and_ClockCorrectionRate(Result,Result_Info,mTracked,SVTracked);

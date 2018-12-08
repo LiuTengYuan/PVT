@@ -1,3 +1,7 @@
+% handles = guidata(hObject);  % Read the struct from the figure
+% handles.abc = rand           % Modify the struct
+% guidata(hObject, handles);   % Write the modified struct back to the figure
+
 function varargout = PVT(varargin)
 % PVT MATLAB code for PVT.fig
 %      PVT, by itself, creates a new PVT or raises the existing
@@ -72,7 +76,7 @@ handles.lambda = c/f;
 
 DisplayPlot(hObject,handles,'1')
 
-% set(handles.Plot1,'Visible','on')
+set(handles.WTypeSelection,'Enable','off')
 
 axes(handles.ENACLogo)
 [YourImage, ~, ImageAlpha] = imread('ENAC.png');
@@ -82,7 +86,7 @@ axis off
 
 % axes(handles.Liu)
 % imshow('Hello.jpg');
-
+handles.handles_BackUp = handles;
 % Update handles structure
 guidata(hObject, handles);
 
@@ -119,6 +123,7 @@ switch(value)
     case 2
         handles.PseudorangeModel = 'CodeAndCarrier';
 end
+handles.handles_BackUp = handles;
 guidata(hObject,handles);
 
 
@@ -149,6 +154,7 @@ else
     set(handles.OBSfile,'String','');
     msgbox('.obs file not selected!')
 end
+handles.handles_BackUp = handles;
 guidata(hObject,handles);
 
 
@@ -166,6 +172,7 @@ else
     set(handles.NAVfile,'String','');
     msgbox('.nav file not selected!')
 end
+handles.handles_BackUp = handles;
 guidata(hObject,handles);
 
 % --- Executes on button press in RunButton.
@@ -175,7 +182,8 @@ function RunButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Run Main
-handles = guidata(hObject);
+
+handles = handles.handles_BackUp;
 PseudorangeModelSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
 
@@ -199,8 +207,9 @@ handles.DOP = handles.DOP_NLSE_IT;
 % WTypeSelection_Callback(hObject, eventdata, handles)
 % handles = guidata(hObject);
 
-guidata(hObject,handles);
+% guidata(hObject,handles);
 
+set(handles.WTypeSelection,'Enable','on');
 set(handles.SVSelection,'Enable','on')
 SVSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
@@ -439,7 +448,7 @@ function RMSButton_Callback(hObject, eventdata, handles)
 DisplayPlot(hObject,handles,'1')
 WNLSE_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
-set(handles.WTypeSelection,'Enable','on');
+% set(handles.WTypeSelection,'Enable','on');
 
 
 RMS_Errors = [sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2); ...
@@ -580,12 +589,12 @@ WNLSE = get(handles.WNLSE,'value');
 %     case 'SNR + SV GEO'
 %         Type = 2;
 % end
-Type = get(handles.WTypeSelection,'value');
 if ~WNLSE
     set(handles.WTypeSelection,'Enable','off');
     handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
     handles.DOP = handles.DOP_NLSE_IT;
 else
+    Type = get(handles.WTypeSelection,'value');
     set(handles.WTypeSelection,'Enable','on');
     handles.RX_Position_ENU = handles.RX_Position_ENU_W(Type).NLSE_IT;
     handles.DOP = handles.DOP_W(Type).NLSE_IT;
@@ -696,7 +705,7 @@ elseif strcmp(PlotsToDisplay,'234')
     cla(handles.Plot7);
     set(handles.Plot8,'visible','off');
     cla(handles.Plot8);
-elseif strcmp(PlotsToDisplay,'5678')
+elseif strcmp(PlotsToDisplay,'5678') %????????????????????????????????????
     set(handles.Plot1,'visible','off');
     cla(handles.Plot1);
     set(handles.Plot2,'visible','off');
@@ -832,7 +841,7 @@ function SVSelection_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of SVSelection as text
 %        str2double(get(hObject,'String')) returns contents of SVSelection as a double
 
-handles = guidata(hObject);
+% handles = guidata(hObject);
 
 STR = get(handles.SVSelection,'string');
 Index = find(STR == ',');
@@ -846,7 +855,7 @@ else
     SVList = str2num(STR);
     if ~numel(SVList)
         SVList = handles.SVTracked;
-        set(handles.SVSelection,'String','ALL')
+        set(handles.SVSelection,'String','ALL') %?????????????????????????
     end
 end
 

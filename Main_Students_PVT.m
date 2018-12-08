@@ -65,12 +65,12 @@ for epoch=1:Nb_Epoch
     redundant_SV = setdiff(find(mTracked(epoch,:)~=0),Ephem(:,1));
     %redundant_SV is the satellite that is in mTracked yet not in Ephem
     if redundant_SV
-    vNb_Sat(epoch) = vNb_Sat(epoch)-length(setdiff(find(mTracked(epoch,:)~=0),Ephem(:,1)));
-    mTracked(epoch,redundant_SV) = 0;
-    handles.mC1(epoch,redundant_SV) = 0;
-    handles.mL1(epoch,redundant_SV) = 0;
-    handles.mD1(epoch,redundant_SV) = 0;
-    handles.mS1(epoch,redundant_SV) = 0;
+        vNb_Sat(epoch) = vNb_Sat(epoch)-length(setdiff(find(mTracked(epoch,:)~=0),Ephem(:,1)));
+        mTracked(epoch,redundant_SV) = 0;
+        handles.mC1(epoch,redundant_SV) = 0;
+        handles.mL1(epoch,redundant_SV) = 0;
+        handles.mD1(epoch,redundant_SV) = 0;
+        handles.mS1(epoch,redundant_SV) = 0;
     end
 end
 Total_Nb_Sat = length(find(sum(mTracked)~=0));
@@ -115,51 +115,30 @@ for epoch=1:Nb_Epoch
             
         end
     end
-   
-%     if mTracked(epoch,:)
-            
-%         end
+    
     clc;
     ProcessingCompleted = epoch/(Nb_Epoch)*100;
     fprintf("\n SV Position Processig... ");
     fprintf(" \n Total Completed - %.2f %% \n",ProcessingCompleted);
 end
 
-    for PRN=1:size(mTracked,2)
-        if sum(mTracked(:,PRN))
-            handles.SVTracked(PRN) = PRN;
-        end
-    end
-
 %%-------------------------------------------------------------------------
 %% Plot Satellite Orbit
 
-
-handles.SVTracked = handles.SVTracked(find(handles.SVTracked ~= 0));
 handles.mTracked = mTracked;
+handles.SVTracked = find(sum(handles.mTracked)~=0);
 
 SV(Total_Nb_Sat) = struct();
 index = 0;
 for PRN=handles.SVTracked
-        index = index + 1;
-
+    index = index + 1;
     SV(index).PRN = PRN;
     for epoch=1:Nb_Epoch
         INDEX = find(Result(epoch).SV(:,1) == PRN);
-        %     SV(PRN).Result_x = zeros(1,Nb_Epoch);
-        %     SV(PRN).Result_y = zeros(1,Nb_Epoch);
-        %     SV(PRN).Result_z = zeros(1,Nb_Epoch);
-        %     ChangeSV = 1;
-        %     for epoch=1:Nb_Epoch
-        %         if mTracked(epoch,PRN)
-        %             if ChangeSV, INDEX = INDEX + 1; FirstEpoch = epoch; ChangeSV = 0; end
-        
-        %             findprn = find(Result(epoch).SV(:,1)==PRN);
         if mTracked(epoch,PRN)
             SV(index).Result_x(epoch) = Result(epoch).SV(INDEX,2); % We have to plot a vector once directly, instead of ploting point by point. Thus, we need to pass from the struct to a vector.
             SV(index).Result_y(epoch) = Result(epoch).SV(INDEX,3); % In every epoch we have 1 position for each satellite, this forces us to plot point by point and may take several time (Ni plots).
             SV(index).Result_z(epoch) = Result(epoch).SV(INDEX,4); % So we change rewrite as Ni positions for each satellite, going around all its epochs.
-        %             handles.SVTracked(PRN) = PRN;
         else
             SV(index).Result_x(epoch) = NaN; % We have to plot a vector once directly, instead of ploting point by point. Thus, we need to pass from the struct to a vector.
             SV(index).Result_y(epoch) = NaN; % In every epoch we have 1 position for each satellite, this forces us to plot point by point and may take several time (Ni plots).
@@ -168,15 +147,8 @@ for PRN=handles.SVTracked
     end
     
 end
-    
-%     SV(PRN).Result_x(find(SV(PRN).Result_x == 0)) = NaN;
-%     SV(PRN).Result_y(find(SV(PRN).Result_y == 0)) = NaN;
-%     SV(PRN).Result_z(find(SV(PRN).Result_z == 0)) = NaN;
-    
-% end
 
 handles.SV = SV;
-handles.INDEX = length(handles.SVTracked);
 
 axes(handles.Plot1)
 hold off
@@ -186,8 +158,6 @@ for index = 1 : length(handles.SVTracked)
     scatter3(SV(index).Result_x(EpochToPlot)/1000,SV(index).Result_y(EpochToPlot)/1000,SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('SV # ', num2str(handles.SVTracked(index))));
     legend('-DynamicLegend')
     hold all
-%     index
-%     pause
 end
 Legend = get(gca,'Legend');
 Legend = Legend.String;
@@ -196,13 +166,10 @@ hold on
 for index = 1 : length(handles.SVTracked)
     plot3(SV(index).Result_x/1000,SV(index).Result_y/1000,SV(index).Result_z/1000,'k.');%,'DisplayName',sprintf("PRN %d", PRN));
     hold on
-%     index
-%     pause
 end
 grid on
 title('Satellites orbits during data collection','fontweight','bold')
 legend(Legend);
-
 
 
 %%-------------------------------------------------------------------------
@@ -234,11 +201,10 @@ Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
 
 % Non Linear LSE - NO ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_NLSE, handles.RX_ClockError_NLSE, handles.Matrix_NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',[],Tiono,Ttropo,1,handles.SV,[],handles.SVTracked);
+[handles.RX_Position_XYZ_NLSE, handles.RX_ClockError_NLSE, handles.Matrix_NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',[],Tiono,Ttropo,1,[],[],handles.SVTracked);
 [handles.RX_Position_LLH_NLSE, handles.RX_Position_ENU_NLSE, handles.Matrix_NLSE, handles.DOP_NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE,Nb_Epoch,handles.Matrix_NLSE);
 
 % SV Latitude, Longitude and Height.
-
 for epoch = 1 : Nb_Epoch
     for index = 1 : length(handles.SVTracked)
         [handles.SV(index).llh(epoch,:)] = xyz_2_lla_PVT( [handles.SV(index).Result_x(epoch), handles.SV(index).Result_y(epoch), handles.SV(index).Result_z(epoch)] );
@@ -293,15 +259,15 @@ handles.azimuth_SV = azimuth_SV;
 [Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, handles.RX_Position_LLH_NLSE, mEpoch, Total_Nb_Sat);
 [Ttropo] = Tropospheric_Correction(handles.RX_Position_LLH_NLSE, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
 
-%Non Linear LSE
+% Non Linear LSE - ATMOSPHERIC CORRECTION
 [handles.RX_Position_XYZ_NLSE_IT, handles.RX_ClockError_NLSE_IT, handles.Matrix_NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',[],Tiono,Ttropo,4,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
 [handles.RX_Position_LLH_NLSE_IT, handles.RX_Position_ENU_NLSE_IT, handles.Matrix_NLSE_IT, handles.DOP_NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE_IT,Nb_Epoch,handles.Matrix_NLSE_IT);
 
-% Weighted (SNR) Non Linear LSE - NO ATMOSPHERIC CORRECTION
+% Weighted (SNR) Non Linear LSE - ATMOSPHERIC CORRECTION
 [handles.RX_Position_XYZ_W(1).NLSE_IT, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE','SNR',Tiono,Ttropo,2,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
 [handles.RX_Position_LLH_W(1).NLSE_IT, handles.RX_Position_ENU_W(1).NLSE_IT, handles.Matrix_W(1).NLSE_IT, handles.DOP_W(1).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(1).NLSE_IT,Nb_Epoch,handles.Matrix_W(1).NLSE_IT);
 
-% Weighted (SNR + SV GEO) Non Linear LSE - NO ATMOSPHERIC CORRECTION
+% Weighted (SNR + SV GEO) Non Linear LSE - ATMOSPHERIC CORRECTION
 [handles.RX_Position_XYZ_W(2).NLSE_IT, handles.RX_ClockError_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE','SNR + SV GEO',Tiono,Ttropo,2,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
 [handles.RX_Position_LLH_W(2).NLSE_IT, handles.RX_Position_ENU_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT, handles.DOP_W(2).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE_IT,Nb_Epoch,handles.Matrix_W(2).NLSE_IT);
 %%-------------------------------------------------------------------------
