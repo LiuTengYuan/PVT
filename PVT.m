@@ -211,6 +211,7 @@ handles.DOP = handles.DOP_NLSE_IT;
 
 set(handles.WTypeSelection,'Enable','on');
 set(handles.SVSelection,'Enable','on')
+set(handles.SVSelection,'String','ALL')
 SVSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
 
@@ -855,7 +856,7 @@ else
     SVList = str2num(STR);
     if ~numel(SVList)
         SVList = handles.SVTracked;
-        set(handles.SVSelection,'String','ALL') %?????????????????????????
+        set(handles.SVSelection,'String','ALL') 
     end
 end
 

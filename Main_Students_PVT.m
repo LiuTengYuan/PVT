@@ -149,6 +149,7 @@ for PRN=handles.SVTracked
 end
 
 handles.SV = SV;
+handles.INDEX = length(handles.SVTracked);
 
 axes(handles.Plot1)
 hold off
