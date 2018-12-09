@@ -1,4 +1,4 @@
-function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,WType,Tiono,Ttropo,CallNumber,SVLLH,RXLLH,handles)
+function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,WType,Tiono,Ttropo,CallNumber,Elevation_Azimuth,handles)
 
 % Result = handles.Result;
 % mC1 = handles.mC1;
@@ -25,8 +25,8 @@ for epoch=1:Nb_Epoch
                 if (WType == 2) && (strcmp(HMode,'NWLSE'))
                     prn = find(handles.SVTracked == Result(epoch).SV(SV_num,1));
                     % 1 - 15    index 1 - 15              1 - 32
-%                     weights(SV_num) = 1/norm(SVLLH(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
-                    weights(SV_num) = (SVLLH(epoch).SV(SV_num,2));
+%                     weights(SV_num) = 1/norm(Elevation_Azimuth(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
+                    weights(SV_num) = (Elevation_Azimuth(epoch).SV(SV_num,2));
                 else
                     weights(SV_num) = 1;
                 end

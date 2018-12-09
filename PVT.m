@@ -702,45 +702,12 @@ if strcmp(PlotsToDisplay,'1')
     cla(handles.Plot3);
     set(handles.Plot4,'visible','off');
     cla(handles.Plot4);
-    set(handles.Plot5,'visible','off');
-    cla(handles.Plot5);
-    set(handles.Plot6,'visible','off');
-    cla(handles.Plot6);
-    set(handles.Plot7,'visible','off');
-    cla(handles.Plot7);
-    set(handles.Plot8,'visible','off');
-    cla(handles.Plot8);
 elseif strcmp(PlotsToDisplay,'234')
     set(handles.Plot1,'visible','off');
     cla(handles.Plot1);
     set(handles.Plot2,'visible','on');
     set(handles.Plot3,'visible','on');
     set(handles.Plot4,'visible','on');
-    set(handles.Plot5,'visible','off');
-    cla(handles.Plot5);
-    set(handles.Plot6,'visible','off');
-    cla(handles.Plot6);
-    set(handles.Plot7,'visible','off');
-    cla(handles.Plot7);
-    set(handles.Plot8,'visible','off');
-    cla(handles.Plot8);
-elseif strcmp(PlotsToDisplay,'5678') %????????????????????????????????????
-    set(handles.Plot1,'visible','off');
-    cla(handles.Plot1);
-    set(handles.Plot2,'visible','off');
-    cla(handles.Plot2);
-    set(handles.Plot3,'visible','off');
-    cla(handles.Plot3);
-    set(handles.Plot4,'visible','off');
-    cla(handles.Plot4);
-    set(handles.Plot5,'visible','on');
-    cla(handles.Plot5);
-%     set(handles.Plot6,'visible','on');
-    cla(handles.Plot6);
-    set(handles.Plot7,'visible','on');
-    cla(handles.Plot7);
-%     set(handles.Plot8,'visible','on');
-    cla(handles.Plot8);
 end
 
 % set(handles.WTypeSelection,'Enable','on');
@@ -899,7 +866,6 @@ if ~exist('List','var')
             List(index) = Lag;
         end
     end
-
 end
 handles.SVList = List;
 guidata(hObject,handles);
@@ -929,12 +895,11 @@ if handles.LoadFile
     handles.path_LoadFile = [handles.path_LoadFile handles.LoadFile];
     LoadedFile = handles.LoadFile;
     load(handles.path_LoadFile)
-    set(handles.MessageBox,'String',['LOADED' LoadedFile]);
+    set(handles.MessageBox,'String',['LOADED ' LoadedFile]);
 else
     set(handles.MessageBox,'String','');
     msgbox('File to load not selected!')
 end
-handles.handles_BackUp = handles;
 
 if handles.LoadFile
     FieldNames = fieldnames(HandlesSaved);
@@ -985,11 +950,6 @@ if handles.SaveDirectory
     if numel(cell2mat(DataSetName))
         set(handles.MessageBox,'String','Saving data...')
         pause(0.001)
-        % a = HandlesSaved;
-        % clear HandlesSaved
-        % HandlesSaved.ref_pos = a.ref_pos;
-        % HandlesSaved.nEpoch_max = a.nEpoch_max;
-        
         save([handles.SaveDirectory '\' cell2mat(DataSetName) '.mat'],'HandlesSaved');
         set(handles.MessageBox,'String','Data Saved!')
         pause(0.001)
