@@ -965,5 +965,17 @@ function GoogleMapsButton_Callback(hObject, eventdata, handles)
 % hObject    handle to GoogleMapsButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-String = ['https://www.google.fr/maps/@' num2str(handles.RX_Position_LLH(end,2)) ',' num2str(handles.RX_Position_LLH(end,2))];
+% [handles.SaveDirectory] = uigetdir('Select directory');
+% DataSetName = {''};
+% if handles.SaveDirectory
+%     DataSetName = inputdlg('Write a name for the LLH to save');
+%     if numel(cell2mat(DataSetName))
+%         filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.xlsx'];
+%         xlswrite(filename,handles.RX_Position_LLH_NLSE)
+%     end
+% end
+% if ~numel(handles.SaveDirectory) || ~numel(cell2mat(DataSetName))
+%     msgbox('LLH not saved')
+% end
+String = ['https://www.google.fr/maps/@' num2str(handles.RX_Position_LLH(end,1),'%.17f') ',' num2str(handles.RX_Position_LLH(end,2),'%.17f')];
 web(String)
