@@ -1,4 +1,4 @@
-function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,WType,Tiono,Ttropo,CallNumber,SVLLH,RXLLH,SVTracked)
+function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,WType,Tiono,Ttropo,CallNumber,SVLLH,RXLLH,handles)
 
 % Result = handles.Result;
 % mC1 = handles.mC1;
@@ -22,10 +22,11 @@ for epoch=1:Nb_Epoch
             Pseudorange_difference(SV_num) = Pseudorange-Pseudorangebar+tsv_meter-trx_meter-Tiono(epoch,SV_num)-Ttropo(epoch,SV_num);
             H(SV_num,:) = [(RX_Xbar-SV_X)/Pseudorangebar (RX_Ybar-SV_Y)/Pseudorangebar (RX_Zbar-SV_Z)/Pseudorangebar 1];
             if CallNumber > 1
-                if strcmp(WType,'SNR + SV GEO')
-                    prn = (SVTracked == Result(epoch).SV(SV_num,1));
-                    weights(SV_num) = 1/norm(SVLLH(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); 
-                    % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
+                if (WType == 2) && (strcmp(HMode,'NWLSE'))
+                    prn = find(handles.SVTracked == Result(epoch).SV(SV_num,1));
+                    % 1 - 15    index 1 - 15              1 - 32
+%                     weights(SV_num) = 1/norm(SVLLH(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
+                    weights(SV_num) = (SVLLH(epoch).SV(SV_num,2));
                 else
                     weights(SV_num) = 1;
                 end
@@ -54,10 +55,13 @@ for epoch=1:Nb_Epoch
     RX_Position_XYZ(epoch,:) = [RX_Xbar RX_Ybar RX_Zbar];
     RX_ClockError(epoch) =  trx_meter;
     clc;
-    ProcessingCompleted = epoch/(Nb_Epoch)*100;
-    fprintf("\n SV Position Processing completed. ");
+    ProcessingCompleted = round(epoch/(Nb_Epoch)*100);
+    if mod(ProcessingCompleted,10)==0
+        set(handles.MessageBox,'string',sprintf("SV Position Completed\n RX Position Processing...\n Total Completed - %.2f %% \nCall %d out of %d. \n",ProcessingCompleted,CallNumber,6));
+        pause(0.001)
+    end
     fprintf("\n RX Position Processig... ");
-    fprintf(" \n Total Completed - %.2f , Call %d out of %d. %% \n",ProcessingCompleted, CallNumber, 4);
+    fprintf(" \nTotal Completed - %.2f , Call %d out of %d. \n",ProcessingCompleted, CallNumber, 6);
 end
 
 clc

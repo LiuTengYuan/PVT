@@ -117,9 +117,13 @@ for epoch=1:Nb_Epoch
     end
     
     clc;
-    ProcessingCompleted = epoch/(Nb_Epoch)*100;
+    ProcessingCompleted = round(epoch/(Nb_Epoch)*100);
     fprintf("\n SV Position Processig... ");
     fprintf(" \n Total Completed - %.2f %% \n",ProcessingCompleted);
+    if mod(ProcessingCompleted,10)==0
+        set(handles.MessageBox,'string',sprintf("\n SV Position Processig...\n Total Completed - %.2f %% \n",ProcessingCompleted));
+        pause(0.01)
+    end
 end
 
 %%-------------------------------------------------------------------------
@@ -202,10 +206,11 @@ Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
 
 % Non Linear LSE - NO ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_NLSE, handles.RX_ClockError_NLSE, handles.Matrix_NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',[],Tiono,Ttropo,1,[],[],handles.SVTracked);
+[handles.RX_Position_XYZ_NLSE, handles.RX_ClockError_NLSE, handles.Matrix_NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,1,[],[],handles);
 [handles.RX_Position_LLH_NLSE, handles.RX_Position_ENU_NLSE, handles.Matrix_NLSE, handles.DOP_NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE,Nb_Epoch,handles.Matrix_NLSE);
 
 % SV Latitude, Longitude and Height.
+
 for epoch = 1 : Nb_Epoch
     for index = 1 : length(handles.SVTracked)
         [handles.SV(index).llh(epoch,:)] = xyz_2_lla_PVT( [handles.SV(index).Result_x(epoch), handles.SV(index).Result_y(epoch), handles.SV(index).Result_z(epoch)] );
@@ -213,17 +218,6 @@ for epoch = 1 : Nb_Epoch
         handles.SV(index).llh(epoch,2) = rad2deg(handles.SV(index).llh(epoch,2));
     end
 end
-
-% Weighted (SNR) Non Linear LSE - NO ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(1).NLSE, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE','SNR',Tiono,Ttropo,2,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
-[handles.RX_Position_LLH_W(1).NLSE, handles.RX_Position_ENU_W(1).NLSE, handles.Matrix_W(1).NLSE, handles.DOP_W(1).NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(1).NLSE,Nb_Epoch,handles.Matrix_W(1).NLSE);
-%%-------------------------------------------------------------------------
-
-% Weighted (SNR + SV GEO) Non Linear LSE - NO ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(2).NLSE, handles.RX_ClockError_W(2).NLSE, handles.Matrix_W(2).NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE','SNR + SV GEO',Tiono,Ttropo,2,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
-[handles.RX_Position_LLH_W(2).NLSE, handles.RX_Position_ENU_W(2).NLSE, handles.Matrix_W(2).NLSE, handles.DOP_W(2).NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE,Nb_Epoch,handles.Matrix_W(2).NLSE);
-%%-------------------------------------------------------------------------
-
 
 %% Calculate and Plot Elevation & Azimuth
 
@@ -254,22 +248,35 @@ azimuth_SV(azimuth_SV==0) = nan;
 handles.elevation_SV = elevation_SV;
 handles.azimuth_SV = azimuth_SV;
 
+
+% Weighted (SNR) Non Linear LSE - NO ATMOSPHERIC CORRECTION
+[handles.RX_Position_XYZ_W(1).NLSE, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,2,Elevation_Azimuth,handles.RX_Position_LLH_NLSE,handles);
+[handles.RX_Position_LLH_W(1).NLSE, handles.RX_Position_ENU_W(1).NLSE, handles.Matrix_W(1).NLSE, handles.DOP_W(1).NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(1).NLSE,Nb_Epoch,handles.Matrix_W(1).NLSE);
+%%-------------------------------------------------------------------------
+
+% Weighted (SNR + ELEVATION) Non Linear LSE - NO ATMOSPHERIC CORRECTION
+[handles.RX_Position_XYZ_W(2).NLSE, handles.RX_ClockError_W(2).NLSE, handles.Matrix_W(2).NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',2,Tiono,Ttropo,3,Elevation_Azimuth,handles.RX_Position_LLH_NLSE,handles);
+[handles.RX_Position_LLH_W(2).NLSE, handles.RX_Position_ENU_W(2).NLSE, handles.Matrix_W(2).NLSE, handles.DOP_W(2).NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE,Nb_Epoch,handles.Matrix_W(2).NLSE);
+%%-------------------------------------------------------------------------
+
+
+
 %%-------------------------------------------------------------------------
 %% Ionosphere Correction & Troposhere Correction
 
 [Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, handles.RX_Position_LLH_NLSE, mEpoch, Total_Nb_Sat);
 [Ttropo] = Tropospheric_Correction(handles.RX_Position_LLH_NLSE, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
 
-% Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_NLSE_IT, handles.RX_ClockError_NLSE_IT, handles.Matrix_NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',[],Tiono,Ttropo,4,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
+%Non Linear LSE
+[handles.RX_Position_XYZ_NLSE_IT, handles.RX_ClockError_NLSE_IT, handles.Matrix_NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,4,[],[],handles);
 [handles.RX_Position_LLH_NLSE_IT, handles.RX_Position_ENU_NLSE_IT, handles.Matrix_NLSE_IT, handles.DOP_NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE_IT,Nb_Epoch,handles.Matrix_NLSE_IT);
 
 % Weighted (SNR) Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(1).NLSE_IT, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE','SNR',Tiono,Ttropo,2,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
+[handles.RX_Position_XYZ_W(1).NLSE_IT, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,5,Elevation_Azimuth,handles.RX_Position_LLH_NLSE,handles);
 [handles.RX_Position_LLH_W(1).NLSE_IT, handles.RX_Position_ENU_W(1).NLSE_IT, handles.Matrix_W(1).NLSE_IT, handles.DOP_W(1).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(1).NLSE_IT,Nb_Epoch,handles.Matrix_W(1).NLSE_IT);
 
-% Weighted (SNR + SV GEO) Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(2).NLSE_IT, handles.RX_ClockError_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE','SNR + SV GEO',Tiono,Ttropo,2,handles.SV,handles.RX_Position_LLH_NLSE,handles.SVTracked);
+% Weighted (SNR + ELEVATION) Non Linear LSE - ATMOSPHERIC CORRECTION
+[handles.RX_Position_XYZ_W(2).NLSE_IT, handles.RX_ClockError_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',2,Tiono,Ttropo,6,Elevation_Azimuth,handles.RX_Position_LLH_NLSE,handles);
 [handles.RX_Position_LLH_W(2).NLSE_IT, handles.RX_Position_ENU_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT, handles.DOP_W(2).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE_IT,Nb_Epoch,handles.Matrix_W(2).NLSE_IT);
 %%-------------------------------------------------------------------------
 

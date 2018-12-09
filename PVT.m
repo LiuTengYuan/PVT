@@ -26,7 +26,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 05-Dec-2018 19:56:30
+% Last Modified by GUIDE v2.5 09-Dec-2018 12:15:35
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -58,6 +58,7 @@ function PVT_OpeningFcn(hObject, eventdata, handles, varargin)
 
 % Choose default command line output for PVT
 handles.output = hObject;
+warning('off')
 
 addpath(genpath('./Library'));
 handles.ref_pos = [4627537.2739   119698.4035  4373317.5742];
@@ -193,23 +194,13 @@ else
     msgbox('Unable to run because OBS and NAV files were not properly loaded.')
 end
 
+
 % Default
 handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
+handles.RX_Position_LLH = handles.RX_Position_LLH_NLSE_IT;
 handles.DOP = handles.DOP_NLSE_IT;
-% MeasurementJump = 0;
-% 
-% for index = 1 : size(handles.CMC,2)
-%     tmp = find(handles.CMC(:,Index)>1e3);
-%     MeasurementJump(Index) = tmp(1);
-% end
-% handles.MeasurementJump = min(MeasurementJump);
 
-% WTypeSelection_Callback(hObject, eventdata, handles)
-% handles = guidata(hObject);
-
-% guidata(hObject,handles);
-
-set(handles.WTypeSelection,'Enable','on');
+% set(handles.WTypeSelection,'Enable','on');
 set(handles.SVSelection,'Enable','on')
 set(handles.SVSelection,'String','ALL')
 SVSelection_Callback(hObject, eventdata, handles)
@@ -413,7 +404,7 @@ function DoPButton_Callback(hObject, eventdata, handles)
 DisplayPlot(hObject,handles,'1');
 WNLSE_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
-set(handles.WTypeSelection,'Enable','on');
+% set(handles.WTypeSelection,'Enable','on');
 
 % axes(handles.Plot1)
 % hold off
@@ -497,55 +488,62 @@ DisplayPlot(hObject,handles,'1')
 
 
 WNLSE = get(handles.WNLSE,'value');
-% String = get(handles.WTypeSelection,'String');
-String = handles.StringWType;
+WTypeSelection_Callback(hObject, eventdata, handles);
+handles = guidata(hObject);
+String = get(handles.WTypeSelection,'String');
+% String = handles.StringWType;
 Value = 1;
-if ~WNLSE
+% if ~WNLSE
 %     Value = 1;
     LEGEND = [{'Raw','with IT'}];
-else
+% else
 %     Value = get(handles.WTypeSelection,'Value');
-    LEGEND = [{[String{1} ' Raw']}, {[String{2} ' Raw']}, {[String{1} ' with IT']}, {[String{2} ' with IT']}];
-end
+%     LEGEND = [{[String{1} ' Raw']}, {[String{2} ' Raw']}, {[String{1} ' with IT']}, {[String{2} ' with IT']}];
+% end
 VectorElements = [1:numel(String)]; % 1 2 3, Value  = 2
 tmp = find(VectorElements ~= Value); % 1 3
 IndexVector = VectorElements(tmp); % 1 2 3 (in 1 3) = 1 3
+Type = get(handles.WTypeSelection,'Value');
+% std_East = zeros(length(VectorElements),1);
+% std_North = zeros(length(VectorElements),1);
+% std_East_nonIT = zeros(length(VectorElements),1);
+% std_North_nonIT = zeros(length(VectorElements),1);
 
     East(:,Value) = handles.RX_Position_ENU(:,1); % column 1
     North(:,Value) = handles.RX_Position_ENU(:,2); % column 1
-    std_East(Value) = std(East);
-    std_North(Value) = std(North);
+    std_East(Value) = std(East(:,Value));
+    std_North(Value) = std(North(:,Value));
 
 if ~WNLSE
     East_nonIT(:,Value) = handles.RX_Position_ENU_NLSE(:,1);
     North_nonIT(:,Value) = handles.RX_Position_ENU_NLSE(:,2);
-    std_East_nonIT(Value) = std(East_nonIT);
-    std_North_nonIT(Value) = std(North_nonIT);
+    std_East_nonIT(Value) = std(East_nonIT(:,Value));
+    std_North_nonIT(Value) = std(North_nonIT(:,Value));
     string = 'NLSE';
 elseif WNLSE
     Index = 0;
-    East_nonIT(:,1) = handles.RX_Position_ENU_W(Value).NLSE(:,1);
-    North_nonIT(:,1) = handles.RX_Position_ENU_W(Value).NLSE(:,2);
-    std_East_nonIT(1) = std(East_nonIT);
-    std_North_nonIT(1) = std(North_nonIT);
-    for Type = IndexVector % [1 3] + 1 = [2 4]
-        East(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,1);
-        North(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,2);
-        East_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
-        North_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
-        
-        std_East(Type) = std(East(:,Type));
-        std_North(Type) = std(North(:,Type));
-        std_East_nonIT(Type) = std(East_nonIT(:,Type));
-        std_North_nonIT(Type) = std(North_nonIT(:,Type));
-    end
+    East_nonIT(:,Value) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
+    North_nonIT(:,Value) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
+    std_East_nonIT(Value) = std(East_nonIT(:,Value));
+    std_North_nonIT(Value) = std(North_nonIT(:,Value));
+%     for Type = IndexVector % [1 3] + 1 = [2 4]
+%         East(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,1);
+%         North(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,2);
+%         East_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
+%         North_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
+%         
+%         std_East(Type) = std(East(:,Type));
+%         std_North(Type) = std(North(:,Type));
+%         std_East_nonIT(Type) = std(East_nonIT(:,Type));
+%         std_North_nonIT(Type) = std(North_nonIT(:,Type));
+%     end
     string = 'Weighted NLSE';
 end
 
-sigmas = [std_East.', std_East_nonIT.', std_North.', std_North_nonIT.'];
+sigmas = [std_East, std_East_nonIT, std_North, std_North_nonIT];
 Titles = [{'East'}, {'East no IT'}, {'North'}, {'North non IT'}];
 if WNLSE
-    Names = [String(Value), String(IndexVector)];
+    Names = [String(Type)];
 else
     Names = [{'NLSE'}];
 end
@@ -554,22 +552,40 @@ for index = 1 : size(sigmas,1)
 end
 
 clc
-fprintf('Error Standard Deviation with %s algorithm:', string);
+fprintf('Error Standard Deviation with %s algorithm:', String{get(handles.WTypeSelection,'Value')});
 disp(' ')
 fprintf('------------------------------------------------------');
-STD = [{'Weight \ Coordinate'},Titles;Names.',Rows]
+STD = [{'Weight \ Coordinate'},Titles;Names,Rows]
 
 axes(handles.Plot1)
 % for k = 1 : 3
 hold off
-plot(East_nonIT,North_nonIT,'.','linewidth',1);
+plot(East_nonIT,North_nonIT,'b.','linewidth',1);
 hold on
-plot(East,North,'.','linewidth',1);
-legend(LEGEND)
-title(sprintf('Recevier Position for %s (Raw and I/T Corrected).', string))
+plot(East,North,'g.','linewidth',1);
+title(sprintf('Recevier Position for %s (Raw and I/T Corrected).', String{get(handles.WTypeSelection,'Value')}))
 xlabel('East (m)')
 ylabel('North (m)')
+% hold on
+% plot(0,0,'ko','markersize',100,'linewidth',2)
+legend(LEGEND)
+xmin = max(min(East_nonIT),min(East));
+xmax = min(max(East_nonIT),max(East));
+ymin = max(min(North_nonIT),min(North));
+ymax = min(max(North_nonIT),max(North));
+x = max(abs(xmin), abs(xmax));
+y = max(abs(ymin), abs(ymax));
+xlim([-x x])
+ylim([-y y])
 grid on
+
+% figure(2)
+% plot(handles.RX_Position_ENU_W(2).NLSE(:,1),handles.RX_Position_ENU_W(2).NLSE(:,2),'r.')
+% hold on
+% plot(handles.RX_Position_ENU_W(2).NLSE_IT(:,1),handles.RX_Position_ENU_W(2).NLSE_IT(:,2),'y.')
+% legend('no IT (raw)', 'IT (with IT)')
+
+
 % end
 
 
@@ -593,11 +609,13 @@ WNLSE = get(handles.WNLSE,'value');
 if ~WNLSE
     set(handles.WTypeSelection,'Enable','off');
     handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
+    handles.RX_Position_LLH = handles.RX_Position_LLH_NLSE_IT;
     handles.DOP = handles.DOP_NLSE_IT;
 else
     Type = get(handles.WTypeSelection,'value');
     set(handles.WTypeSelection,'Enable','on');
     handles.RX_Position_ENU = handles.RX_Position_ENU_W(Type).NLSE_IT;
+    handles.RX_Position_LLH = handles.RX_Position_LLH_W(Type).NLSE_IT;
     handles.DOP = handles.DOP_W(Type).NLSE_IT;
 end
 
@@ -725,7 +743,7 @@ elseif strcmp(PlotsToDisplay,'5678') %????????????????????????????????????
     cla(handles.Plot8);
 end
 
-set(handles.WTypeSelection,'Enable','on');
+% set(handles.WTypeSelection,'Enable','on');
 
     if isfield(hObject,'string')
     if strcmp(get(hObject,'string'),'Orbits') || strcmp(get(hObject,'string'),'LAT - LON') || strcmp(get(hObject,'string'),'Position Estimates')
@@ -761,7 +779,8 @@ function WTypeSelection_Callback(hObject, eventdata, handles)
 string = get(handles.WTypeSelection,'String');
 value = get(handles.WTypeSelection,'Value');
 handles.WType = string{value};
-WNLSE_Callback(hObject, eventdata, handles)
+WNLSE_Callback(hObject, eventdata, handles);
+handles = guidata(hObject);
 guidata(hObject,handles);
 
 % --- Executes during object creation, after setting all properties.
@@ -869,6 +888,19 @@ for counter = 1 : length(SVList)
     end
 end
 
+if ~exist('List','var')
+    SVList = handles.SVTracked;
+    set(handles.SVSelection,'String','ALL')
+    index = 0;
+    for counter = 1 : length(SVList)
+        Lag = find(handles.SVTracked == SVList(counter));
+        if Lag
+            index = index + 1;
+            List(index) = Lag;
+        end
+    end
+
+end
 handles.SVList = List;
 guidata(hObject,handles);
 
@@ -883,3 +915,95 @@ function SVSelection_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in LoadButton.
+function LoadButton_Callback(hObject, eventdata, handles)
+% hObject    handle to LoadButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[handles.LoadFile,handles.path_LoadFile] = uigetfile('.mat','Select file to load');
+set(handles.MessageBox,'String','Loading data...')
+pause(0.001)
+if handles.LoadFile
+    handles.path_LoadFile = [handles.path_LoadFile handles.LoadFile];
+    LoadedFile = handles.LoadFile;
+    load(handles.path_LoadFile)
+    set(handles.MessageBox,'String',['LOADED' LoadedFile]);
+else
+    set(handles.MessageBox,'String','');
+    msgbox('File to load not selected!')
+end
+handles.handles_BackUp = handles;
+
+if handles.LoadFile
+    FieldNames = fieldnames(HandlesSaved);
+    for index = 1 : numel(FieldNames)
+        handles = setfield(handles,cell2mat(FieldNames(index)),getfield(HandlesSaved,cell2mat(FieldNames(index))));
+    end
+    set(handles.MessageBox,'String','Data Loaded!')
+    pause(0.001)
+    % Default
+    handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
+    handles.RX_Position_LLH = handles.RX_Position_LLH_NLSE_IT;
+    handles.DOP = handles.DOP_NLSE_IT;
+    
+    set(handles.WTypeSelection,'Enable','on');
+    set(handles.SVSelection,'Enable','on')
+    set(handles.SVSelection,'String','ALL')
+    SVSelection_Callback(hObject, eventdata, handles)
+    handles = guidata(hObject);
+    
+    guidata(hObject,handles);
+    OrbitsButton_Callback(hObject, eventdata, handles)
+end
+
+% --- Executes on button press in SaveButton.
+function SaveButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+FieldNames = fieldnames(handles);
+HandlesSaved = struct();
+
+StartToSave = 0;
+for index = 1 : numel(FieldNames)
+    if strcmp(cell2mat(FieldNames(index)),'ref_pos')
+        StartToSave = 1;
+    end
+    if StartToSave && ~strcmp(cell2mat(FieldNames(index)),'handles_BackUp')
+        HandlesSaved = setfield(HandlesSaved,cell2mat(FieldNames(index)),getfield(handles,cell2mat(FieldNames(index))));
+    end
+end
+
+[handles.SaveDirectory] = uigetdir('Select directory');
+DataSetName = {''};
+
+if handles.SaveDirectory
+    DataSetName = inputdlg('Write a name for the data to save');
+    if numel(cell2mat(DataSetName))
+        set(handles.MessageBox,'String','Saving data...')
+        pause(0.001)
+        % a = HandlesSaved;
+        % clear HandlesSaved
+        % HandlesSaved.ref_pos = a.ref_pos;
+        % HandlesSaved.nEpoch_max = a.nEpoch_max;
+        
+        save([handles.SaveDirectory '\' cell2mat(DataSetName) '.mat'],'HandlesSaved');
+        set(handles.MessageBox,'String','Data Saved!')
+        pause(0.001)
+    end
+end
+if ~numel(handles.SaveDirectory) || ~numel(cell2mat(DataSetName))
+    msgbox('Data not saved')
+end
+guidata(hObject,handles);
+
+% --- Executes on button press in GoogleMapsButton.
+function GoogleMapsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to GoogleMapsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+String = ['https://www.google.fr/maps/@' num2str(handles.RX_Position_LLH(end,2)) ',' num2str(handles.RX_Position_LLH(end,2))];
+web(String)
