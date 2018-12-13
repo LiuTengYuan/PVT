@@ -75,7 +75,7 @@ c = 299792458;
 f = 1575.42e6;
 handles.lambda = c/f;
 
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1','PVT_OpeningFcn')
 
 set(handles.WTypeSelection,'Enable','off')
 
@@ -215,7 +215,7 @@ function SNRButton_Callback(hObject, eventdata, handles)
 % hObject    handle to SNRButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 axes(handles.Plot1)
@@ -224,7 +224,7 @@ plot(handles.Tracked_mS1(:,handles.SVList),'linewidth',1)
 ylabel('dB/Hz')
 xlabel('Epoch Number')
 title('Signal to Noise Ratio','fontweight','bold')
-legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))),'Location','BestOutside')
+legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 
 % --- Executes on button press in OrbitsButton.
 function OrbitsButton_Callback(hObject, eventdata, handles)
@@ -232,7 +232,7 @@ function OrbitsButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 axes(handles.Plot1)
@@ -262,12 +262,12 @@ function PseduoButton_Callback(hObject, eventdata, handles)
 % hObject    handle to PseduoButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 axes(handles.Plot1)
 hold off
-plot(handles.Tracked_mC1(:,handles.SVList),'linewidth',1,'linestyle','none','marker','.')
+plot(handles.Tracked_mC1(:,handles.SVList),'linestyle','none','marker','.','markersize',15)
 ylabel('meters')
 xlabel('Epoch Number')
 title('Pseudorange','fontweight','bold')
@@ -279,12 +279,12 @@ function CarrierPhaseButton_Callback(hObject, eventdata, handles)
 % hObject    handle to CarrierPhaseButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 axes(handles.Plot1)
 hold off
-plot(handles.lambda * handles.Tracked_mL1(:,handles.SVList),'linewidth',1,'linestyle','none','marker','.')
+plot(handles.lambda * handles.Tracked_mL1(:,handles.SVList),'linestyle','none','marker','.','markersize',15)
 ylabel('meters')
 xlabel('Epoch Number')
 title('Carrier Phase','fontweight','bold')
@@ -304,23 +304,23 @@ handles = guidata(hObject);
 axes(handles.Plot2)
 hold off;
 plot(handles.RX_Position_ENU(:,1));
-ylabel('meters')
-xlabel('Epoch Number')
-title('Error of East','fontweight','bold')
+ylabel('meters','fontsize',8)
+xlabel('Epoch Number','fontsize',8)
+title('Error of East','fontweight','bold','fontsize',8)
 
 axes(handles.Plot3)
 hold off;
 plot(handles.RX_Position_ENU(:,2));
-ylabel('meters')
-xlabel('Epoch Number')
-title('Error of North','fontweight','bold')
+ylabel('meters','fontsize',8)
+xlabel('Epoch Number','fontsize',8)
+title('Error of North','fontweight','bold','fontsize',8)
 
 axes(handles.Plot4)
 hold off;
 plot(handles.RX_Position_ENU(:,3));
-ylabel('meters')
-xlabel('Epoch Number')
-title('Error of Up','fontweight','bold')
+ylabel('meters','fontsize',8)
+xlabel('Epoch Number','fontsize',8)
+title('Error of Up','fontweight','bold','fontsize',8)
 
 
 % --- Executes on button press in ElevationButton.
@@ -328,16 +328,16 @@ function ElevationButton_Callback(hObject, eventdata, handles)
 % hObject    handle to ElevationButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 axes(handles.Plot1)
 hold off
-plot(handles.elevation_SV(:,handles.SVList),'.','linewidth',2)
+plot(handles.elevation_SV(:,handles.SVList),'linestyle','none','marker','.','markersize',15)
 ylabel('Degrees')
 xlabel('Epoch Number')
 title('Elevation between RX and SV','fontweight','bold')
-legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))),'Location','BestOutside')
+legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 grid on
 
 % --- Executes on button press in AzimuthButton.
@@ -345,12 +345,12 @@ function AzimuthButton_Callback(hObject, eventdata, handles)
 % hObject    handle to AzimuthButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 axes(handles.Plot1)
 hold off
-plot(handles.azimuth_SV(:,handles.SVList),'.','linewidth',2)
+plot(handles.azimuth_SV(:,handles.SVList),'linestyle','none','marker','.','markersize',15)
 ylabel('Degrees')
 xlabel('Epoch Number')
 title('Azimuth between RX and SV','fontweight','bold')
@@ -365,7 +365,7 @@ function LATLONButton_Callback(hObject, eventdata, handles)
 
 % if strcmp(get(hObject,'string'),'LAT - LON')
 
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 axes(handles.Plot1)
@@ -401,7 +401,7 @@ function DoPButton_Callback(hObject, eventdata, handles)
 % hObject    handle to DoPButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1');
+DisplayPlot(hObject,handles,'1',[]);
 WNLSE_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
 % set(handles.WTypeSelection,'Enable','on');
@@ -419,6 +419,7 @@ handles = guidata(hObject);
 % grid on
 
 RMS_Errors = [sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2); ...
+    sqrt(handles.DOP.VDOP.^2);...
     sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2 + handles.DOP.VDOP.^2);...
     sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2 + handles.DOP.VDOP.^2 + handles.DOP.TDOP.^2); ...
     handles.DOP.TDOP];
@@ -427,8 +428,8 @@ axes(handles.Plot1)
 hold off
 plot(RMS_Errors.' ,'linewidth',1);
 hold on
-legend('HDOP','PDOP','GDOP','TDOP')
-title('Dilusion of Precision (without considering RMS errors (CS, PD, MP and noise))')
+legend('HDOP','VDOP','PDOP','GDOP','TDOP')
+title('Dilution of Precision)')
 xlabel('Epoch Number')
 grid on;
 
@@ -437,7 +438,7 @@ function RMSButton_Callback(hObject, eventdata, handles)
 % hObject    handle to RMSButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 WNLSE_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
 % set(handles.WTypeSelection,'Enable','on');
@@ -464,7 +465,7 @@ function CodeMinusCarrierButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 CMC = handles.Tracked_mC1 - handles.Tracked_mL1*handles.lambda;
@@ -484,7 +485,7 @@ function PositionScatterDisplayButton_Callback(hObject, eventdata, handles)
 % hObject    handle to PositionScatterDisplayButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'1')
+DisplayPlot(hObject,handles,'1',[])
 
 
 WNLSE = get(handles.WNLSE,'value');
@@ -696,7 +697,7 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % % zlabel('Density')
 % % grid on
 
-function DisplayPlot(hObject,handles,PlotsToDisplay)
+function DisplayPlot(hObject,handles,PlotsToDisplay,Call)
 
 if strcmp(PlotsToDisplay,'1')
     set(handles.Plot1,'visible','on');
@@ -716,8 +717,9 @@ end
 
 % set(handles.WTypeSelection,'Enable','on');
 
-    if isfield(hObject,'string')
-    if strcmp(get(hObject,'string'),'Orbits') || strcmp(get(hObject,'string'),'LAT - LON') || strcmp(get(hObject,'string'),'Position Estimates')
+    if ~strcmp(Call,'PVT_OpeningFcn')
+    if strcmp(get(hObject,'string'),'Orbits') || strcmp(get(hObject,'string'),'LAT - LON')...
+            || strcmp(get(hObject,'string'),'Position Estimates') || strcmp(get(hObject,'string'),'LOAD')
         set(handles.MinEpoch,'Enable','off')
         set(handles.MaxEpoch,'Enable','off')
         set(handles.SVSelection,'Enable','off')
