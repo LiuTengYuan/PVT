@@ -222,7 +222,7 @@ axes(handles.Plot1)
 hold off
 plot(handles.Tracked_mS1(:,handles.SVList),'linewidth',1)
 ylabel('dB/Hz')
-xlabel('Epoch')
+xlabel('Epoch Number')
 title('Signal to Noise Ratio','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))),'Location','BestOutside')
 
@@ -268,8 +268,8 @@ DisplayPlot(hObject,handles,'1')
 axes(handles.Plot1)
 hold off
 plot(handles.Tracked_mC1(:,handles.SVList),'linewidth',1,'linestyle','none','marker','.')
-ylabel('m')
-xlabel('Epoch')
+ylabel('meters')
+xlabel('Epoch Number')
 title('Pseudorange','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(:,handles.SVList))))
 
@@ -286,7 +286,7 @@ axes(handles.Plot1)
 hold off
 plot(handles.lambda * handles.Tracked_mL1(:,handles.SVList),'linewidth',1,'linestyle','none','marker','.')
 ylabel('meters')
-xlabel('Epoch')
+xlabel('Epoch Number')
 title('Carrier Phase','fontweight','bold')
 % legend(strcat('PRN # ', string(find(sum(handles.mL1(:,handles.SVList)) ~= 0))),'Location','BestOutside')
 legend(strcat('PRN # ', string(handles.SVTracked(:,handles.SVList))))
@@ -304,23 +304,23 @@ handles = guidata(hObject);
 axes(handles.Plot2)
 hold off;
 plot(handles.RX_Position_ENU(:,1));
-ylabel('m')
-xlabel('Epoch')
-title('East','fontweight','bold')
+ylabel('meters')
+xlabel('Epoch Number')
+title('Error of East','fontweight','bold')
 
 axes(handles.Plot3)
 hold off;
 plot(handles.RX_Position_ENU(:,2));
-ylabel('m')
-xlabel('Epoch')
-title('North','fontweight','bold')
+ylabel('meters')
+xlabel('Epoch Number')
+title('Error of North','fontweight','bold')
 
 axes(handles.Plot4)
 hold off;
 plot(handles.RX_Position_ENU(:,3));
-ylabel('m')
-xlabel('Epoch')
-title('Up','fontweight','bold')
+ylabel('meters')
+xlabel('Epoch Number')
+title('Error of Up','fontweight','bold')
 
 
 % --- Executes on button press in ElevationButton.
@@ -333,9 +333,9 @@ DisplayPlot(hObject,handles,'1')
 
 axes(handles.Plot1)
 hold off
-plot(handles.elevation_SV(:,handles.SVList),'linewidth',2)
+plot(handles.elevation_SV(:,handles.SVList),'.','linewidth',2)
 ylabel('Degrees')
-xlabel('Epoch')
+xlabel('Epoch Number')
 title('Elevation between RX and SV','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))),'Location','BestOutside')
 grid on
@@ -350,9 +350,9 @@ DisplayPlot(hObject,handles,'1')
 
 axes(handles.Plot1)
 hold off
-plot(handles.azimuth_SV(:,handles.SVList),'linewidth',2)
+plot(handles.azimuth_SV(:,handles.SVList),'.','linewidth',2)
 ylabel('Degrees')
-xlabel('Epoch')
+xlabel('Epoch Number')
 title('Azimuth between RX and SV','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 grid on
@@ -393,7 +393,7 @@ grid on
 legend(Legend);
 xlabel('Longitude (degrees)')
 ylabel('Latitude (degrees)')
-title('Sky Plot Latitude - Longitude','fontweight','bold')
+title('Footprint Latitude - Longitude','fontweight','bold')
 
 
 % --- Executes on button press in DoPButton.
@@ -414,7 +414,7 @@ handles = guidata(hObject);
 % hold on
 % legend('EDOP','NDOP','VDOP','TDOP')
 % title('Dilusion of Precision (considering RMS errors (CS, PD, MP and noise))')
-% xlabel('Epoch')
+% xlabel('Epoch Number')
 % ylabel('Meters')
 % grid on
 
@@ -429,7 +429,7 @@ plot(RMS_Errors.' ,'linewidth',1);
 hold on
 legend('HDOP','PDOP','GDOP','TDOP')
 title('Dilusion of Precision (without considering RMS errors (CS, PD, MP and noise))')
-xlabel('Epoch')
+xlabel('Epoch Number')
 grid on;
 
 % --- Executes on button press in RMSButton.
@@ -454,7 +454,7 @@ plot(RMS_Errors.' ,'linewidth',1);
 hold on
 legend('HDOP','PDOP','GDOP','TDOP')
 title('Dilusion of Precision (without considering RMS errors (CS, PD, MP and noise))')
-xlabel('Epoch')
+xlabel('Epoch Number')
 ylabel('Meters')
 grid on;
 
@@ -473,7 +473,7 @@ axes(handles.Plot1)
 hold off
 plot(CMC(:,handles.SVList),'linewidth',1);
 ylabel('meters')
-xlabel('Epoch')
+xlabel('Epoch Number')
 title('Code-minus-Carrier','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 grid on
@@ -490,7 +490,11 @@ DisplayPlot(hObject,handles,'1')
 WNLSE = get(handles.WNLSE,'value');
 WTypeSelection_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
-String = get(handles.WTypeSelection,'String');
+if WNLSE
+    String = get(handles.WTypeSelection,'String');
+else
+    String = [{'NLSE'}];
+end
 % String = handles.StringWType;
 Value = 1;
 % if ~WNLSE
@@ -965,17 +969,17 @@ function GoogleMapsButton_Callback(hObject, eventdata, handles)
 % hObject    handle to GoogleMapsButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% [handles.SaveDirectory] = uigetdir('Select directory');
-% DataSetName = {''};
-% if handles.SaveDirectory
-%     DataSetName = inputdlg('Write a name for the LLH to save');
-%     if numel(cell2mat(DataSetName))
-%         filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.xlsx'];
-%         xlswrite(filename,handles.RX_Position_LLH_NLSE)
-%     end
-% end
-% if ~numel(handles.SaveDirectory) || ~numel(cell2mat(DataSetName))
-%     msgbox('LLH not saved')
-% end
+[handles.SaveDirectory] = uigetdir('Select directory');
+DataSetName = {''};
+if handles.SaveDirectory
+    DataSetName = inputdlg('Write a name for the LLH to save');
+    if numel(cell2mat(DataSetName))
+        filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.xlsx'];
+        xlswrite(filename,handles.RX_Position_LLH_NLSE)
+    end
+end
+if ~numel(handles.SaveDirectory) || ~numel(cell2mat(DataSetName))
+    msgbox('LLH not saved')
+end
 String = ['https://www.google.fr/maps/@' num2str(handles.RX_Position_LLH(end,1),'%.17f') ',' num2str(handles.RX_Position_LLH(end,2),'%.17f')];
 web(String)
