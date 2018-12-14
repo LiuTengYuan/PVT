@@ -26,7 +26,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 14-Dec-2018 00:57:35
+% Last Modified by GUIDE v2.5 14-Dec-2018 16:38:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -367,7 +367,6 @@ function LATLONButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% if strcmp(get(hObject,'string'),'LAT - LON')
 
 DisplayPlot(hObject,handles,'1',[])
 
@@ -375,11 +374,6 @@ DisplayPlot(hObject,handles,'1',[])
 axes(handles.Plot1)
 hold off
 
-% for index = 1 : handles.INDEX
-%     for epoch = 1 : length(handles.SV(index).Result_x)
-%         [handles.SV(index).llh(epoch,:)] = xyz_2_lla_PVT( [handles.SV(index).Result_x(epoch), handles.SV(index).Result_y(epoch), handles.SV(index).Result_z(epoch)] );
-%     end
-% end
 for index = 1 : handles.INDEX
     EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
     EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
@@ -408,19 +402,6 @@ function DoPButton_Callback(hObject, eventdata, handles)
 DisplayPlot(hObject,handles,'1',[]);
 WNLSE_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
-% set(handles.WTypeSelection,'Enable','on');
-
-% axes(handles.Plot1)
-% hold off
-% plot(...
-%     [handles.DOP.EDOP; handles.DOP.NDOP; handles.DOP.VDOP; handles.DOP.TDOP].'...
-%     ,'linewidth',1);
-% hold on
-% legend('EDOP','NDOP','VDOP','TDOP')
-% title('Dilusion of Precision (considering RMS errors (CS, PD, MP and noise))')
-% xlabel('Epoch Number')
-% ylabel('Meters')
-% grid on
 
 RMS_Errors = [sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2); ...
     sqrt(handles.DOP.VDOP.^2);...
@@ -502,23 +483,12 @@ else
     String = {'1'};
     ValueToString = 1;
 end
-% String = handles.StringWType;
 Value = 1;
-% if ~WNLSE
-%     Value = 1;
 LEGEND = [{'Raw','with IT'}];
-% else
-%     Value = get(handles.WTypeSelection,'Value');
-%     LEGEND = [{[String{1} ' Raw']}, {[String{2} ' Raw']}, {[String{1} ' with IT']}, {[String{2} ' with IT']}];
-% end
 VectorElements = [1:numel(String)]; % 1 2 3, Value  = 2
 tmp = find(VectorElements ~= Value); % 1 3
 IndexVector = VectorElements(tmp); % 1 2 3 (in 1 3) = 1 3
 Type = get(handles.WTypeSelection,'Value');
-% std_East = zeros(length(VectorElements),1);
-% std_North = zeros(length(VectorElements),1);
-% std_East_nonIT = zeros(length(VectorElements),1);
-% std_North_nonIT = zeros(length(VectorElements),1);
 
 East(:,Value) = handles.RX_Position_ENU(:,1); % column 1
 North(:,Value) = handles.RX_Position_ENU(:,2); % column 1
@@ -537,17 +507,6 @@ elseif WNLSE
     North_nonIT(:,Value) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
     std_East_nonIT(Value) = std(East_nonIT(:,Value));
     std_North_nonIT(Value) = std(North_nonIT(:,Value));
-    %     for Type = IndexVector % [1 3] + 1 = [2 4]
-    %         East(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,1);
-    %         North(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,2);
-    %         East_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
-    %         North_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
-    %
-    %         std_East(Type) = std(East(:,Type));
-    %         std_North(Type) = std(North(:,Type));
-    %         std_East_nonIT(Type) = std(East_nonIT(:,Type));
-    %         std_North_nonIT(Type) = std(North_nonIT(:,Type));
-    %     end
     string = 'Weighted LSE';
 end
 
@@ -590,15 +549,6 @@ xlim([-x x])
 ylim([-y y])
 grid on
 
-% figure(2)
-% plot(handles.RX_Position_ENU_W(2).NLSE(:,1),handles.RX_Position_ENU_W(2).NLSE(:,2),'r.')
-% hold on
-% plot(handles.RX_Position_ENU_W(2).NLSE_IT(:,1),handles.RX_Position_ENU_W(2).NLSE_IT(:,2),'y.')
-% legend('no IT (raw)', 'IT (with IT)')
-
-
-% end
-
 
 
 % --- Executes on button press in WNLSE.
@@ -610,13 +560,7 @@ function WNLSE_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of WNLSE
 
 WNLSE = get(handles.WNLSE,'value');
-% handles.WType = 'SNR';
-% switch handles.WType
-%     case 'SNR'
-%         Type = 1;
-%     case 'SNR + SV GEO'
-%         Type = 2;
-% end
+
 if ~WNLSE
     set(handles.WTypeSelection,'Enable','off');
     handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
@@ -632,76 +576,7 @@ end
 
 guidata(hObject,handles);
 
-% --- Executes on button press in AtmosphericCorrections.
-function AtmosphericCorrections_Callback(hObject, eventdata, handles)
-% hObject    handle to AtmosphericCorrections (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of AtmosphericCorrections
-
-
-% % --- Executes on button press in PositionEstimatesWarmMapButton.
-% function PositionEstimatesWarmMapButton_Callback(hObject, eventdata, handles)
-% % hObject    handle to PositionEstimatesWarmMapButton (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-%
-% DisplayPlot(hObject,handles,'5678')
-%
-% WNLSE = get(handles.WNLSE,'value');
-%
-%
-% %     Up = handles.RX_Position_ENU(:,3);
-%
-% if ~WNLSE
-%     East_nonIT = handles.RX_Position_ENU_NLSE(:,1);
-%     North_nonIT = handles.RX_Position_ENU_NLSE(:,2);
-% %     Up_nonIT = handles.RX_Position_ENU_NLSE(:,3);
-%     string = 'NLSE';
-% elseif WNLSE
-%
-%     East_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,1);
-%     North_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,2);
-% %     Up_nonIT = handles.RX_Position_ENU_NWLSE(:,3);
-%     string = 'Weighted NLSE';
-% end
-%
-% title(sprintf('Recevier Position for %s (Raw [UP] and I/T Corrected [BOTTOM])', string))
-% axes(handles.Plot5)
-% hold off
-% WarmPlot = hist3([East_nonIT,North_nonIT],[20,20]);
-% Plot5 = pcolor(WarmPlot);
-% set(Plot5,'edgecolor','none')
-% xlabel('East (m)')
-% ylabel('North (m)')
-%
-% % axes(handles.Plot6)
-% % hold off
-% % hist3([East_nonIT,North_nonIT],[20,20])
-% % xlabel('East(m)')
-% % ylabel('North (m)')
-% % zlabel('Density')
-% % grid on
-%
-% axes(handles.Plot7)
-% hold off
-% [WarmPlot,xy] = hist3([East,North],[20,20]);
-% Plot7 = pcolor(WarmPlot);
-% xlim
-% set(Plot7,'edgecolor','none')
-% xlabel('East (m)')
-% ylabel('North (m)')
-% grid on
-% colormap('jet')
-%
-% % axes(handles.Plot8)
-% % hold off
-% % hist3([East_nonIT,North_nonIT],[20,20])
-% % xlabel('East(m)')
-% % ylabel('North (m)')
-% % zlabel('Density')
-% % grid on
 
 function DisplayPlot(hObject,handles,PlotsToDisplay,Call)
 
@@ -967,7 +842,7 @@ if handles.SaveDirectory
         set(handles.MessageBox,'String','Data Saved!')
         filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.kml'];
         iconFilename = fullfile(pwd, 'icon18.png');
-        kmlwritepoint(filename,handles.RX_Position_LLH_W(2).NLSE_IT(:,1),...
+        kmlwritepoint(filename,handles.RX_Position_LLH_W(1).NLSE_IT(:,1),...
             handles.RX_Position_LLH_W(2).NLSE_IT(:,2),handles.RX_Position_LLH_W(2).NLSE_IT(:,3),...
             'Icon', iconFilename, 'IconScale',0.2, 'Name', blanks(handles.Nb_Epoch), 'Color', 'blue')
         pause(0.001)
@@ -1025,3 +900,15 @@ function SVToFilter_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in SkyPlot.
+function SkyPlot_Callback(hObject, eventdata, handles)
+% hObject    handle to SkyPlot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+DisplayPlot(hObject,handles,'1',[]);
+
+axes(handles.Plot1)
+hold off
+skyPlot(handles)
