@@ -31,11 +31,11 @@ function varargout = PVT(varargin)
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @PVT_OpeningFcn, ...
-                   'gui_OutputFcn',  @PVT_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
+    'gui_Singleton',  gui_Singleton, ...
+    'gui_OpeningFcn', @PVT_OpeningFcn, ...
+    'gui_OutputFcn',  @PVT_OutputFcn, ...
+    'gui_LayoutFcn',  [] , ...
+    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -96,7 +96,7 @@ guidata(hObject, handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = PVT_OutputFcn(hObject, eventdata, handles) 
+function varargout = PVT_OutputFcn(hObject, eventdata, handles)
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -238,11 +238,11 @@ DisplayPlot(hObject,handles,'1',[])
 axes(handles.Plot1)
 hold off
 for index = 1 : handles.INDEX
-        EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
-        EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
-        scatter3(handles.SV(index).Result_x(EpochToPlot)/1000,handles.SV(index).Result_y(EpochToPlot)/1000,handles.SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
-        legend('-DynamicLegend')
-        hold all
+    EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
+    EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
+    scatter3(handles.SV(index).Result_x(EpochToPlot)/1000,handles.SV(index).Result_y(EpochToPlot)/1000,handles.SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
+    legend('-DynamicLegend')
+    hold all
 end
 Legend = get(gca,'Legend');
 Legend = Legend.String;
@@ -297,7 +297,7 @@ function RXENUButtom_Callback(hObject, eventdata, handles)
 % hObject    handle to RXENUButtom (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-DisplayPlot(hObject,handles,'234')
+DisplayPlot(hObject,handles,'234',[])
 WNLSE_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
 
@@ -379,7 +379,7 @@ hold off
 for index = 1 : handles.INDEX
     EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
     EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
-    scatter((handles.SV(index).llh(EpochToPlot,2)),(handles.SV(index).llh(EpochToPlot,1)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));  
+    scatter((handles.SV(index).llh(EpochToPlot,2)),(handles.SV(index).llh(EpochToPlot,1)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
     legend('-DynamicLegend','Location','BestOutside')
     hold all
 end
@@ -500,7 +500,7 @@ end
 Value = 1;
 % if ~WNLSE
 %     Value = 1;
-    LEGEND = [{'Raw','with IT'}];
+LEGEND = [{'Raw','with IT'}];
 % else
 %     Value = get(handles.WTypeSelection,'Value');
 %     LEGEND = [{[String{1} ' Raw']}, {[String{2} ' Raw']}, {[String{1} ' with IT']}, {[String{2} ' with IT']}];
@@ -514,10 +514,10 @@ Type = get(handles.WTypeSelection,'Value');
 % std_East_nonIT = zeros(length(VectorElements),1);
 % std_North_nonIT = zeros(length(VectorElements),1);
 
-    East(:,Value) = handles.RX_Position_ENU(:,1); % column 1
-    North(:,Value) = handles.RX_Position_ENU(:,2); % column 1
-    std_East(Value) = std(East(:,Value));
-    std_North(Value) = std(North(:,Value));
+East(:,Value) = handles.RX_Position_ENU(:,1); % column 1
+North(:,Value) = handles.RX_Position_ENU(:,2); % column 1
+std_East(Value) = std(East(:,Value));
+std_North(Value) = std(North(:,Value));
 
 if ~WNLSE
     East_nonIT(:,Value) = handles.RX_Position_ENU_NLSE(:,1);
@@ -531,17 +531,17 @@ elseif WNLSE
     North_nonIT(:,Value) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
     std_East_nonIT(Value) = std(East_nonIT(:,Value));
     std_North_nonIT(Value) = std(North_nonIT(:,Value));
-%     for Type = IndexVector % [1 3] + 1 = [2 4]
-%         East(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,1);
-%         North(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,2);
-%         East_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
-%         North_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
-%         
-%         std_East(Type) = std(East(:,Type));
-%         std_North(Type) = std(North(:,Type));
-%         std_East_nonIT(Type) = std(East_nonIT(:,Type));
-%         std_North_nonIT(Type) = std(North_nonIT(:,Type));
-%     end
+    %     for Type = IndexVector % [1 3] + 1 = [2 4]
+    %         East(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,1);
+    %         North(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,2);
+    %         East_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
+    %         North_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
+    %
+    %         std_East(Type) = std(East(:,Type));
+    %         std_North(Type) = std(North(:,Type));
+    %         std_East_nonIT(Type) = std(East_nonIT(:,Type));
+    %         std_North_nonIT(Type) = std(North_nonIT(:,Type));
+    %     end
     string = 'Weighted NLSE';
 end
 
@@ -640,27 +640,27 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % % hObject    handle to PositionEstimatesWarmMapButton (see GCBO)
 % % eventdata  reserved - to be defined in a future version of MATLAB
 % % handles    structure with handles and user data (see GUIDATA)
-% 
+%
 % DisplayPlot(hObject,handles,'5678')
-% 
+%
 % WNLSE = get(handles.WNLSE,'value');
-% 
-%     
+%
+%
 % %     Up = handles.RX_Position_ENU(:,3);
-% 
+%
 % if ~WNLSE
 %     East_nonIT = handles.RX_Position_ENU_NLSE(:,1);
 %     North_nonIT = handles.RX_Position_ENU_NLSE(:,2);
 % %     Up_nonIT = handles.RX_Position_ENU_NLSE(:,3);
 %     string = 'NLSE';
 % elseif WNLSE
-%     
+%
 %     East_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,1);
 %     North_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,2);
 % %     Up_nonIT = handles.RX_Position_ENU_NWLSE(:,3);
 %     string = 'Weighted NLSE';
 % end
-% 
+%
 % title(sprintf('Recevier Position for %s (Raw [UP] and I/T Corrected [BOTTOM])', string))
 % axes(handles.Plot5)
 % hold off
@@ -669,7 +669,7 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % set(Plot5,'edgecolor','none')
 % xlabel('East (m)')
 % ylabel('North (m)')
-% 
+%
 % % axes(handles.Plot6)
 % % hold off
 % % hist3([East_nonIT,North_nonIT],[20,20])
@@ -677,7 +677,7 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % % ylabel('North (m)')
 % % zlabel('Density')
 % % grid on
-% 
+%
 % axes(handles.Plot7)
 % hold off
 % [WarmPlot,xy] = hist3([East,North],[20,20]);
@@ -688,7 +688,7 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % ylabel('North (m)')
 % grid on
 % colormap('jet')
-% 
+%
 % % axes(handles.Plot8)
 % % hold off
 % % hist3([East_nonIT,North_nonIT],[20,20])
@@ -717,7 +717,7 @@ end
 
 % set(handles.WTypeSelection,'Enable','on');
 
-    if ~strcmp(Call,'PVT_OpeningFcn')
+if ~strcmp(Call,'PVT_OpeningFcn')
     if strcmp(get(hObject,'string'),'Orbits') || strcmp(get(hObject,'string'),'LAT - LON')...
             || strcmp(get(hObject,'string'),'Position Estimates') || strcmp(get(hObject,'string'),'LOAD')
         set(handles.MinEpoch,'Enable','off')
@@ -728,8 +728,8 @@ end
         set(handles.MaxEpoch,'Enable','on')
         set(handles.SVSelection,'Enable','on')
     end
-    end
-    
+end
+
 %     if strcmp(get(hObject,'string'),'DoP') || strcmp(get(hObject,'string'),'RMS')
 %     else
 %         set(handles.WTypeSelection,'Enable','off');
@@ -848,7 +848,7 @@ else
     SVList = str2num(STR);
     if ~numel(SVList)
         SVList = handles.SVTracked;
-        set(handles.SVSelection,'String','ALL') 
+        set(handles.SVSelection,'String','ALL')
     end
 end
 
@@ -912,7 +912,7 @@ if handles.LoadFile
     for index = 1 : numel(FieldNames)
         handles = setfield(handles,cell2mat(FieldNames(index)),getfield(HandlesSaved,cell2mat(FieldNames(index))));
     end
-    set(handles.MessageBox,'String','Data Loaded!')
+    set(handles.MessageBox,'String',['Data Loaded ' LoadedFile])
     pause(0.001)
     % Default
     handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
@@ -958,6 +958,11 @@ if handles.SaveDirectory
         pause(0.001)
         save([handles.SaveDirectory '\' cell2mat(DataSetName) '.mat'],'HandlesSaved');
         set(handles.MessageBox,'String','Data Saved!')
+        filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.kml'];
+%         for epoch = 1:handles.Nb_Epoch
+            kmlwritepoint(filename,handles.RX_Position_LLH_NLSE(:,1),...
+                handles.RX_Position_LLH_NLSE(:,2),handles.RX_Position_LLH_NLSE(:,3))
+%         end
         pause(0.001)
     end
 end
@@ -971,17 +976,5 @@ function GoogleMapsButton_Callback(hObject, eventdata, handles)
 % hObject    handle to GoogleMapsButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-[handles.SaveDirectory] = uigetdir('Select directory');
-DataSetName = {''};
-if handles.SaveDirectory
-    DataSetName = inputdlg('Write a name for the LLH to save');
-    if numel(cell2mat(DataSetName))
-        filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.xlsx'];
-        xlswrite(filename,handles.RX_Position_LLH_NLSE)
-    end
-end
-if ~numel(handles.SaveDirectory) || ~numel(cell2mat(DataSetName))
-    msgbox('LLH not saved')
-end
 String = ['https://www.google.fr/maps/@' num2str(handles.RX_Position_LLH(end,1),'%.17f') ',' num2str(handles.RX_Position_LLH(end,2),'%.17f')];
 web(String)
