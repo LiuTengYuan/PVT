@@ -82,10 +82,24 @@ handles.Nb_Epoch = Nb_Epoch;
 
 switch handles.PseudorangeModel
     case 'Code'
-        mC1 = mC1;
+        handles.mC1 = handles.mC1;
     case 'CodeAndCarrier'
         %         mC1 = CODE + CARREIR;
 end
+%%-------------------------------------------------------------------------
+
+%% Avoid SVs tracked
+if handles.SVListFilter ~= 0
+    mTracked(:,handles.SVListFilter) = zeros(Nb_Epoch,length(handles.SVListFilter));
+    handles.mC1(:,handles.SVListFilter) = zeros(Nb_Epoch,length(handles.SVListFilter));
+    handles.mD1(:,handles.SVListFilter) = zeros(Nb_Epoch,length(handles.SVListFilter));
+    handles.mS1(:,handles.SVListFilter) = zeros(Nb_Epoch,length(handles.SVListFilter));
+    handles.mL1(:,handles.SVListFilter) = zeros(Nb_Epoch,length(handles.SVListFilter));
+    for epoch = 1 : Nb_Epoch
+        vNb_Sat(epoch) = sum(mTracked(epoch,:));
+    end
+end
+
 
 %%-------------------------------------------------------------------------
 %% Compute Transmission Time  &  SV Position and ClockCorrection
@@ -95,6 +109,7 @@ Result(Nb_Epoch) = struct(); % This way automatically allocate memory for all Nb
 Result_Info(Nb_Epoch) = struct();
 
 Titles = {'SV # PRN','SV_X','SV_Y','SV_Z','SV_ClockError_second','SV_ClockError_meter'};
+
 
 for epoch=1:Nb_Epoch
     Result_Info(epoch).INFO = Titles;
@@ -121,7 +136,7 @@ for epoch=1:Nb_Epoch
     fprintf("\n SV Position Processig... ");
     fprintf(" \n Total Completed - %.2f %% \n",ProcessingCompleted);
     if mod(ProcessingCompleted,10)==0
-        set(handles.MessageBox,'string',sprintf("\n SV Position Processig...\n Total Completed - %.2f %% \n",ProcessingCompleted));
+        set(handles.MessageBox,'string',sprintf("\n SV Position Processig...\n Total Completed - %.2f %%",ProcessingCompleted));
         pause(0.01)
     end
 end
@@ -279,5 +294,6 @@ handles.azimuth_SV = azimuth_SV;
 [handles.RX_Position_XYZ_W(2).NLSE_IT, handles.RX_ClockError_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',2,Tiono,Ttropo,6,Elevation_Azimuth,handles);
 [handles.RX_Position_LLH_W(2).NLSE_IT, handles.RX_Position_ENU_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT, handles.DOP_W(2).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE_IT,Nb_Epoch,handles.Matrix_W(2).NLSE_IT);
 %%-------------------------------------------------------------------------
+
 
 end

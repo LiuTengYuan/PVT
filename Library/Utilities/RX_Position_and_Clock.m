@@ -57,7 +57,7 @@ for epoch=1:Nb_Epoch
     clc;
     ProcessingCompleted = round(epoch/(Nb_Epoch)*100);
     if mod(ProcessingCompleted,10)==0
-        set(handles.MessageBox,'string',sprintf("SV Position Completed\n RX Position Processing...\n Total Completed - %.2f %% \nCall %d out of %d. \n",ProcessingCompleted,CallNumber,6));
+        set(handles.MessageBox,'string',sprintf(" SV Position Completed\n RX Position Processing...\n Total Completed - %.2f %%\n   Call %d out of %d.",ProcessingCompleted,CallNumber,6));
         pause(0.001)
     end
     fprintf("\n RX Position Processig... ");
@@ -67,5 +67,7 @@ end
 clc
 fprintf("\n SV Position Processing completed. ");
 fprintf("\n RX Position Processing completed. \n");
+set(handles.MessageBox,'string',sprintf("\n SV Position Processing completed.\n RX Position Processing completed. \n"));
+
 
 end

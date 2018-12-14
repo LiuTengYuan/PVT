@@ -26,16 +26,16 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 09-Dec-2018 12:15:35
+% Last Modified by GUIDE v2.5 14-Dec-2018 00:57:35
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
-    'gui_Singleton',  gui_Singleton, ...
-    'gui_OpeningFcn', @PVT_OpeningFcn, ...
-    'gui_OutputFcn',  @PVT_OutputFcn, ...
-    'gui_LayoutFcn',  [] , ...
-    'gui_Callback',   []);
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @PVT_OpeningFcn, ...
+                   'gui_OutputFcn',  @PVT_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -96,7 +96,7 @@ guidata(hObject, handles);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = PVT_OutputFcn(hObject, eventdata, handles)
+function varargout = PVT_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -187,6 +187,8 @@ function RunButton_Callback(hObject, eventdata, handles)
 handles = handles.handles_BackUp;
 PseudorangeModelSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
+SVToFilter_Callback(hObject, eventdata, handles)
+handles = guidata(hObject);
 
 if sum(handles.filename_n ~= 0) && sum(handles.filename_o ~= 0)
     [handles] = Main_Students_PVT(handles);
@@ -238,11 +240,11 @@ DisplayPlot(hObject,handles,'1',[])
 axes(handles.Plot1)
 hold off
 for index = 1 : handles.INDEX
-    EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
-    EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
-    scatter3(handles.SV(index).Result_x(EpochToPlot)/1000,handles.SV(index).Result_y(EpochToPlot)/1000,handles.SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
-    legend('-DynamicLegend')
-    hold all
+        EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
+        EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
+        scatter3(handles.SV(index).Result_x(EpochToPlot)/1000,handles.SV(index).Result_y(EpochToPlot)/1000,handles.SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
+        legend('-DynamicLegend')
+        hold all
 end
 Legend = get(gca,'Legend');
 Legend = Legend.String;
@@ -272,7 +274,7 @@ ylabel('meters')
 xlabel('Epoch Number')
 title('Pseudorange','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(:,handles.SVList))))
-
+grid on
 
 % --- Executes on button press in CarrierPhaseButton.
 function CarrierPhaseButton_Callback(hObject, eventdata, handles)
@@ -290,7 +292,7 @@ xlabel('Epoch Number')
 title('Carrier Phase','fontweight','bold')
 % legend(strcat('PRN # ', string(find(sum(handles.mL1(:,handles.SVList)) ~= 0))),'Location','BestOutside')
 legend(strcat('PRN # ', string(handles.SVTracked(:,handles.SVList))))
-
+grid on
 
 % --- Executes on button press in RXENUButtom.
 function RXENUButtom_Callback(hObject, eventdata, handles)
@@ -307,6 +309,7 @@ plot(handles.RX_Position_ENU(:,1));
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of East','fontweight','bold','fontsize',8)
+grid on
 
 axes(handles.Plot3)
 hold off;
@@ -314,6 +317,7 @@ plot(handles.RX_Position_ENU(:,2));
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of North','fontweight','bold','fontsize',8)
+grid on
 
 axes(handles.Plot4)
 hold off;
@@ -321,7 +325,7 @@ plot(handles.RX_Position_ENU(:,3));
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of Up','fontweight','bold','fontsize',8)
-
+grid on
 
 % --- Executes on button press in ElevationButton.
 function ElevationButton_Callback(hObject, eventdata, handles)
@@ -336,7 +340,7 @@ hold off
 plot(handles.elevation_SV(:,handles.SVList),'linestyle','none','marker','.','markersize',15)
 ylabel('Degrees')
 xlabel('Epoch Number')
-title('Elevation between RX and SV','fontweight','bold')
+title('Satellite ELEVATION with respect to RX','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 grid on
 
@@ -353,7 +357,7 @@ hold off
 plot(handles.azimuth_SV(:,handles.SVList),'linestyle','none','marker','.','markersize',15)
 ylabel('Degrees')
 xlabel('Epoch Number')
-title('Azimuth between RX and SV','fontweight','bold')
+title('Satellite AZIMUTH with respect to RX','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 grid on
 
@@ -379,7 +383,7 @@ hold off
 for index = 1 : handles.INDEX
     EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
     EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
-    scatter((handles.SV(index).llh(EpochToPlot,2)),(handles.SV(index).llh(EpochToPlot,1)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
+    scatter((handles.SV(index).llh(EpochToPlot,2)),(handles.SV(index).llh(EpochToPlot,1)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));  
     legend('-DynamicLegend','Location','BestOutside')
     hold all
 end
@@ -493,14 +497,16 @@ WTypeSelection_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
 if WNLSE
     String = get(handles.WTypeSelection,'String');
+    ValueToString = get(handles.WTypeSelection,'Value');
 else
-    String = [{'NLSE'}];
+    String = {'1'};
+    ValueToString = 1;
 end
 % String = handles.StringWType;
 Value = 1;
 % if ~WNLSE
 %     Value = 1;
-LEGEND = [{'Raw','with IT'}];
+    LEGEND = [{'Raw','with IT'}];
 % else
 %     Value = get(handles.WTypeSelection,'Value');
 %     LEGEND = [{[String{1} ' Raw']}, {[String{2} ' Raw']}, {[String{1} ' with IT']}, {[String{2} ' with IT']}];
@@ -514,10 +520,10 @@ Type = get(handles.WTypeSelection,'Value');
 % std_East_nonIT = zeros(length(VectorElements),1);
 % std_North_nonIT = zeros(length(VectorElements),1);
 
-East(:,Value) = handles.RX_Position_ENU(:,1); % column 1
-North(:,Value) = handles.RX_Position_ENU(:,2); % column 1
-std_East(Value) = std(East(:,Value));
-std_North(Value) = std(North(:,Value));
+    East(:,Value) = handles.RX_Position_ENU(:,1); % column 1
+    North(:,Value) = handles.RX_Position_ENU(:,2); % column 1
+    std_East(Value) = std(East(:,Value));
+    std_North(Value) = std(North(:,Value));
 
 if ~WNLSE
     East_nonIT(:,Value) = handles.RX_Position_ENU_NLSE(:,1);
@@ -531,17 +537,17 @@ elseif WNLSE
     North_nonIT(:,Value) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
     std_East_nonIT(Value) = std(East_nonIT(:,Value));
     std_North_nonIT(Value) = std(North_nonIT(:,Value));
-    %     for Type = IndexVector % [1 3] + 1 = [2 4]
-    %         East(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,1);
-    %         North(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,2);
-    %         East_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
-    %         North_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
-    %
-    %         std_East(Type) = std(East(:,Type));
-    %         std_North(Type) = std(North(:,Type));
-    %         std_East_nonIT(Type) = std(East_nonIT(:,Type));
-    %         std_North_nonIT(Type) = std(North_nonIT(:,Type));
-    %     end
+%     for Type = IndexVector % [1 3] + 1 = [2 4]
+%         East(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,1);
+%         North(:,Type) = handles.RX_Position_ENU_W(Type).NLSE_IT(:,2);
+%         East_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
+%         North_nonIT(:,Type) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
+%         
+%         std_East(Type) = std(East(:,Type));
+%         std_North(Type) = std(North(:,Type));
+%         std_East_nonIT(Type) = std(East_nonIT(:,Type));
+%         std_North_nonIT(Type) = std(North_nonIT(:,Type));
+%     end
     string = 'Weighted NLSE';
 end
 
@@ -557,7 +563,7 @@ for index = 1 : size(sigmas,1)
 end
 
 clc
-fprintf('Error Standard Deviation with %s algorithm:', String{get(handles.WTypeSelection,'Value')});
+fprintf('Error Standard Deviation with %s algorithm:', String{ValueToString});
 disp(' ')
 fprintf('------------------------------------------------------');
 STD = [{'Weight \ Coordinate'},Titles;Names,Rows]
@@ -568,7 +574,7 @@ hold off
 plot(East_nonIT,North_nonIT,'b.','linewidth',1);
 hold on
 plot(East,North,'g.','linewidth',1);
-title(sprintf('Recevier Position for %s (Raw and I/T Corrected).', String{get(handles.WTypeSelection,'Value')}))
+title(sprintf('Recevier Position for %s and weight %s (Raw and I/T Corrected).',string, String{ValueToString}))
 xlabel('East (m)')
 ylabel('North (m)')
 % hold on
@@ -640,27 +646,27 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % % hObject    handle to PositionEstimatesWarmMapButton (see GCBO)
 % % eventdata  reserved - to be defined in a future version of MATLAB
 % % handles    structure with handles and user data (see GUIDATA)
-%
+% 
 % DisplayPlot(hObject,handles,'5678')
-%
+% 
 % WNLSE = get(handles.WNLSE,'value');
-%
-%
+% 
+%     
 % %     Up = handles.RX_Position_ENU(:,3);
-%
+% 
 % if ~WNLSE
 %     East_nonIT = handles.RX_Position_ENU_NLSE(:,1);
 %     North_nonIT = handles.RX_Position_ENU_NLSE(:,2);
 % %     Up_nonIT = handles.RX_Position_ENU_NLSE(:,3);
 %     string = 'NLSE';
 % elseif WNLSE
-%
+%     
 %     East_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,1);
 %     North_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,2);
 % %     Up_nonIT = handles.RX_Position_ENU_NWLSE(:,3);
 %     string = 'Weighted NLSE';
 % end
-%
+% 
 % title(sprintf('Recevier Position for %s (Raw [UP] and I/T Corrected [BOTTOM])', string))
 % axes(handles.Plot5)
 % hold off
@@ -669,7 +675,7 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % set(Plot5,'edgecolor','none')
 % xlabel('East (m)')
 % ylabel('North (m)')
-%
+% 
 % % axes(handles.Plot6)
 % % hold off
 % % hist3([East_nonIT,North_nonIT],[20,20])
@@ -677,7 +683,7 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % % ylabel('North (m)')
 % % zlabel('Density')
 % % grid on
-%
+% 
 % axes(handles.Plot7)
 % hold off
 % [WarmPlot,xy] = hist3([East,North],[20,20]);
@@ -688,7 +694,7 @@ function AtmosphericCorrections_Callback(hObject, eventdata, handles)
 % ylabel('North (m)')
 % grid on
 % colormap('jet')
-%
+% 
 % % axes(handles.Plot8)
 % % hold off
 % % hist3([East_nonIT,North_nonIT],[20,20])
@@ -717,7 +723,7 @@ end
 
 % set(handles.WTypeSelection,'Enable','on');
 
-if ~strcmp(Call,'PVT_OpeningFcn')
+    if ~strcmp(Call,'PVT_OpeningFcn')
     if strcmp(get(hObject,'string'),'Orbits') || strcmp(get(hObject,'string'),'LAT - LON')...
             || strcmp(get(hObject,'string'),'Position Estimates') || strcmp(get(hObject,'string'),'LOAD')
         set(handles.MinEpoch,'Enable','off')
@@ -728,8 +734,8 @@ if ~strcmp(Call,'PVT_OpeningFcn')
         set(handles.MaxEpoch,'Enable','on')
         set(handles.SVSelection,'Enable','on')
     end
-end
-
+    end
+    
 %     if strcmp(get(hObject,'string'),'DoP') || strcmp(get(hObject,'string'),'RMS')
 %     else
 %         set(handles.WTypeSelection,'Enable','off');
@@ -848,7 +854,7 @@ else
     SVList = str2num(STR);
     if ~numel(SVList)
         SVList = handles.SVTracked;
-        set(handles.SVSelection,'String','ALL')
+        set(handles.SVSelection,'String','ALL') 
     end
 end
 
@@ -912,7 +918,7 @@ if handles.LoadFile
     for index = 1 : numel(FieldNames)
         handles = setfield(handles,cell2mat(FieldNames(index)),getfield(HandlesSaved,cell2mat(FieldNames(index))));
     end
-    set(handles.MessageBox,'String',['Data Loaded ' LoadedFile])
+    set(handles.MessageBox,'String','Data Loaded!')
     pause(0.001)
     % Default
     handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
@@ -929,6 +935,7 @@ if handles.LoadFile
     OrbitsButton_Callback(hObject, eventdata, handles)
 end
 
+% --- Executes on button press in SaveButton.
 % --- Executes on button press in SaveButton.
 function SaveButton_Callback(hObject, eventdata, handles)
 % hObject    handle to SaveButton (see GCBO)
@@ -978,3 +985,43 @@ function GoogleMapsButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 String = ['https://www.google.fr/maps/@' num2str(handles.RX_Position_LLH(end,1),'%.17f') ',' num2str(handles.RX_Position_LLH(end,2),'%.17f')];
 web(String)
+
+
+function SVToFilter_Callback(hObject, eventdata, handles)
+% hObject    handle to SVToFilter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of SVToFilter as text
+%        str2double(get(hObject,'String')) returns contents of SVToFilter as a double
+
+STR = get(handles.SVToFilter,'string');
+Index = find(STR == ',');
+if numel(Index)
+    SVListFilter(1) = str2num(STR(1:Index(1)-1));
+    for count = 1 : length(Index) - 1
+        SVListFilter(count + 1) = str2num(STR(Index(count)+1:Index(count+1)-1));
+    end
+    SVListFilter(end + 1) = str2num(STR(Index(end)+1:end));
+else
+    SVListFilter = str2num(STR);
+    if ~numel(SVListFilter)
+        SVListFilter = 0;
+        set(handles.SVToFilter,'String','NONE') 
+    end
+end
+
+handles.SVListFilter = SVListFilter;
+guidata(hObject,handles);
+
+% --- Executes during object creation, after setting all properties.
+function SVToFilter_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to SVToFilter (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
