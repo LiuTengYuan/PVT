@@ -26,7 +26,6 @@ function [vSatellite_xyz, fSV_ClockCorr] = SV_Position_and_ClockCorrection(vEphe
 
 %Initialize Variables
 global c;
-c = 299792458.0; %(m/s)
 OmegaEDot = 7.2921151467e-5; %(r/s)
 mu = 3.986005e+14; %(m^3/s^2)
 F = -4.442807633e-10; %(s/m^0.5)

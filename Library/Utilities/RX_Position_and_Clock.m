@@ -1,7 +1,4 @@
-function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,WType,Tiono,Ttropo,CallNumber,Elevation_Azimuth,handles)
-
-% Result = handles.Result;
-% mC1 = handles.mC1;
+function [RX_Position_XYZ, RX_ClockError,Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,HMode,WType,Tiono,Ttropo,CallNumber,Elevation_Azimuth,MessageBox)
 
 RX_Position_XYZ = zeros(Nb_Epoch,3);
 RX_ClockError = zeros(Nb_Epoch,1);
@@ -23,9 +20,6 @@ for epoch=1:Nb_Epoch
             H(SV_num,:) = [(RX_Xbar-SV_X)/Pseudorangebar (RX_Ybar-SV_Y)/Pseudorangebar (RX_Zbar-SV_Z)/Pseudorangebar 1];
             if CallNumber > 1
                 if (WType == 2) && (strcmp(HMode,'NWLSE'))
-                    prn = find(handles.SVTracked == Result(epoch).SV(SV_num,1));
-                    % 1 - 15    index 1 - 15              1 - 32
-%                     weights(SV_num) = 1/norm(Elevation_Azimuth(prn).llh(epoch,1:2) - RXLLH(epoch,1:2)); % In position SV_num, the 1/norm between SV prn (corresponding to index SV_num) and RX
                     weights(SV_num) = (Elevation_Azimuth(epoch).SV(SV_num,2));
                 else
                     weights(SV_num) = 1;
@@ -54,20 +48,37 @@ for epoch=1:Nb_Epoch
     end
     RX_Position_XYZ(epoch,:) = [RX_Xbar RX_Ybar RX_Zbar];
     RX_ClockError(epoch) =  trx_meter;
+    
     clc;
     ProcessingCompleted = round(epoch/(Nb_Epoch)*100);
-    if mod(ProcessingCompleted,10)==0
-        set(handles.MessageBox,'string',sprintf(" SV Position Completed\n RX Position Processing...\n Total Completed - %.2f %%\n   Call %d out of %d.",ProcessingCompleted,CallNumber,6));
-        pause(0.001)
+    if CallNumber <= 6
+        if mod(ProcessingCompleted,10)==0
+            set(MessageBox,'string',sprintf(" SV Position Completed\n RX Position Processing...\n Total Completed - %.2f %%\n   Call %d out of %d.",ProcessingCompleted,CallNumber,6));
+            pause(0.001)
+        end
+        fprintf("\n RX Position Processig... ");
+        fprintf(" \nTotal Completed - %.2f , Call %d out of %d. \n",ProcessingCompleted, CallNumber, 6);
     end
-    fprintf("\n RX Position Processig... ");
-    fprintf(" \nTotal Completed - %.2f , Call %d out of %d. \n",ProcessingCompleted, CallNumber, 6);
+    if CallNumber == 7
+        if mod(ProcessingCompleted,10)==0
+            set(MessageBox,'string',sprintf(" Carrier Smoothing Processing...\n Total Completed - %.2f %%\n",ProcessingCompleted));
+            pause(0.001)
+        end
+        fprintf("\n Carrier Smoothing Processig... ");
+        fprintf(" \nTotal Completed - %.2f %%\n",ProcessingCompleted);
+    end
 end
 
-clc
-fprintf("\n SV Position Processing completed. ");
-fprintf("\n RX Position Processing completed. \n");
-set(handles.MessageBox,'string',sprintf("\n SV Position Processing completed.\n RX Position Processing completed. \n"));
-
-
+if CallNumber <= 6
+    clc
+    fprintf("\n SV Position Processing completed. ");
+    fprintf("\n RX Position Processing completed. \n");
+    set(MessageBox,'string',sprintf("\n SV Position Processing completed.\n RX Position Processing completed. \n"));
+elseif CallNumber == 7
+    clc
+    fprintf("\n SV Position Processing completed. ");
+    fprintf("\n RX Position Processing completed. ");
+    fprintf("\n Carrier Smoothing Processing completed. \n");
+    set(MessageBox,'string',sprintf("\n SV Position Processing completed.\n RX Position Processing completed.\n Carrie Smoothing Processing completed. \n"));
+end
 end

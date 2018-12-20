@@ -26,7 +26,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 14-Dec-2018 16:38:45
+% Last Modified by GUIDE v2.5 19-Dec-2018 22:51:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -71,9 +71,8 @@ handles.ENAC_llh = [43.564758116,1.48173363,203.8171];
 % Weighting Function Options
 handles.StringWType = {'SNR', 'SNR + SV GEO'};
 
-c = 299792458;
-f = 1575.42e6;
-handles.lambda = c/f;
+global lambda;
+handles.lambda = lambda;
 
 DisplayPlot(hObject,handles,'1','PVT_OpeningFcn')
 
@@ -189,6 +188,8 @@ PseudorangeModelSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
 SVToFilter_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
+SmoothNumber_Callback(hObject, eventdata, handles)
+handles = guidata(hObject);
 
 if sum(handles.filename_n ~= 0) && sum(handles.filename_o ~= 0)
     [handles] = Main_Students_PVT(handles);
@@ -205,6 +206,8 @@ handles.DOP = handles.DOP_NLSE_IT;
 % set(handles.WTypeSelection,'Enable','on');
 set(handles.SVSelection,'Enable','on')
 set(handles.SVSelection,'String','ALL')
+set(handles.SmoothNumber,'Enable','on')
+set(handles.SmoothNumber,'String','100')
 SVSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
 
@@ -227,6 +230,8 @@ ylabel('dB/Hz')
 xlabel('Epoch Number')
 title('Signal to Noise Ratio','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 % --- Executes on button press in OrbitsButton.
 function OrbitsButton_Callback(hObject, eventdata, handles)
@@ -275,6 +280,8 @@ xlabel('Epoch Number')
 title('Pseudorange','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(:,handles.SVList))))
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 % --- Executes on button press in CarrierPhaseButton.
 function CarrierPhaseButton_Callback(hObject, eventdata, handles)
@@ -293,6 +300,8 @@ title('Carrier Phase','fontweight','bold')
 % legend(strcat('PRN # ', string(find(sum(handles.mL1(:,handles.SVList)) ~= 0))),'Location','BestOutside')
 legend(strcat('PRN # ', string(handles.SVTracked(:,handles.SVList))))
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 % --- Executes on button press in RXENUButtom.
 function RXENUButtom_Callback(hObject, eventdata, handles)
@@ -310,6 +319,8 @@ ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of East','fontweight','bold','fontsize',8)
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 axes(handles.Plot3)
 hold off;
@@ -318,6 +329,8 @@ ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of North','fontweight','bold','fontsize',8)
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 axes(handles.Plot4)
 hold off;
@@ -326,6 +339,8 @@ ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of Up','fontweight','bold','fontsize',8)
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 % --- Executes on button press in ElevationButton.
 function ElevationButton_Callback(hObject, eventdata, handles)
@@ -343,6 +358,8 @@ xlabel('Epoch Number')
 title('Satellite ELEVATION with respect to RX','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 % --- Executes on button press in AzimuthButton.
 function AzimuthButton_Callback(hObject, eventdata, handles)
@@ -360,6 +377,8 @@ xlabel('Epoch Number')
 title('Satellite AZIMUTH with respect to RX','fontweight','bold')
 legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 % --- Executes on button press in LATLONButton.
 function LATLONButton_Callback(hObject, eventdata, handles)
@@ -417,6 +436,8 @@ legend('HDOP','VDOP','PDOP','GDOP','TDOP')
 title('Dilution of Precision)')
 xlabel('Epoch Number')
 grid on;
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 % --- Executes on button press in RMSButton.
 function RMSButton_Callback(hObject, eventdata, handles)
@@ -452,8 +473,8 @@ function CodeMinusCarrierButton_Callback(hObject, eventdata, handles)
 
 DisplayPlot(hObject,handles,'1',[])
 
-
 CMC = handles.Tracked_mC1 - handles.Tracked_mL1*handles.lambda;
+CMC_smoothed = handles.Tracked_smoothed - handles.Tracked_mL1*handles.lambda;
 
 axes(handles.Plot1)
 hold off
@@ -461,8 +482,13 @@ plot(CMC(:,handles.SVList),'linewidth',1);
 ylabel('meters')
 xlabel('Epoch Number')
 title('Code-minus-Carrier','fontweight','bold')
-legend(strcat('PRN # ', string(handles.SVTracked(handles.SVList))))
+Legend = strcat('PRN # ', string(handles.SVTracked(handles.SVList)));
+hold on
+plot(CMC_smoothed(:,handles.SVList),'linewidth',1);
+legend(Legend)
 grid on
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
 
 
 % --- Executes on button press in PositionScatterDisplayButton.
@@ -604,10 +630,12 @@ if ~strcmp(Call,'PVT_OpeningFcn')
         set(handles.MinEpoch,'Enable','off')
         set(handles.MaxEpoch,'Enable','off')
         set(handles.SVSelection,'Enable','off')
+        set(handles.SmoothNumber,'Enable','off')
     else
         set(handles.MinEpoch,'Enable','on')
         set(handles.MaxEpoch,'Enable','on')
         set(handles.SVSelection,'Enable','on')
+        set(handles.SmoothNumber,'Enable','on')
     end
 end
 
@@ -912,3 +940,32 @@ DisplayPlot(hObject,handles,'1',[]);
 axes(handles.Plot1)
 hold off
 skyPlot(handles)
+
+
+
+function SmoothNumber_Callback(hObject, eventdata, handles)
+% hObject    handle to SmoothNumber (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of SmoothNumber as text
+%        str2double(get(hObject,'String')) returns contents of SmoothNumber as a double
+handles.smoothnumber = str2num(get(handles.SmoothNumber,'String'));
+if ~numel(handles.smoothnumber)
+    handles.smoothnumber = 100;
+    set(handles.SmoothNumber,'String','100')
+end
+guidata(hObject,handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function SmoothNumber_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to SmoothNumber (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
