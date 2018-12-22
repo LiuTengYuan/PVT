@@ -26,7 +26,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 19-Dec-2018 22:51:45
+% Last Modified by GUIDE v2.5 22-Dec-2018 17:58:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -197,6 +197,8 @@ else
     msgbox('Unable to run because OBS and NAV files were not properly loaded.')
 end
 
+CarrierSmoothing_Callback(hObject, eventdata, handles)
+handles = guidata(hObject);
 
 % Default
 handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
@@ -314,10 +316,13 @@ handles = guidata(hObject);
 
 axes(handles.Plot2)
 hold off;
-plot(handles.RX_Position_ENU(:,1));
+plot(handles.RX_Position_ENU(:,1))
+hold on
+plot(handles.RX_Position_ENU_smoothed(:,1))
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of East','fontweight','bold','fontsize',8)
+legend('Unsmoothed','Carrier Smoothing')
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
@@ -325,9 +330,12 @@ MinEpoch_Callback(hObject, eventdata, handles);
 axes(handles.Plot3)
 hold off;
 plot(handles.RX_Position_ENU(:,2));
+hold on
+plot(handles.RX_Position_ENU_smoothed(:,2))
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of North','fontweight','bold','fontsize',8)
+legend('Unsmoothed','Carrier Smoothing')
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
@@ -335,9 +343,12 @@ MinEpoch_Callback(hObject, eventdata, handles);
 axes(handles.Plot4)
 hold off;
 plot(handles.RX_Position_ENU(:,3));
+hold on
+plot(handles.RX_Position_ENU_smoothed(:,3))
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of Up','fontweight','bold','fontsize',8)
+legend('Unsmoothed','Carrier Smoothing')
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
@@ -428,10 +439,15 @@ RMS_Errors = [sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2); ...
     sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2 + handles.DOP.VDOP.^2 + handles.DOP.TDOP.^2); ...
     handles.DOP.TDOP];
 
+% RMS_Errors_CS = [sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2); ...
+%     sqrt(handles.DOP_smoothed.VDOP.^2);...
+%     sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2 + handles.DOP_smoothed.VDOP.^2);...
+%     sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2 + handles.DOP_smoothed.VDOP.^2 + handles.DOP_smoothed.TDOP.^2); ...
+%     handles.DOP_smoothed.TDOP];
+
 axes(handles.Plot1)
 hold off
 plot(RMS_Errors.' ,'linewidth',1);
-hold on
 legend('HDOP','VDOP','PDOP','GDOP','TDOP')
 title('Dilution of Precision)')
 xlabel('Epoch Number')
@@ -509,39 +525,37 @@ else
     String = {'1'};
     ValueToString = 1;
 end
-Value = 1;
-LEGEND = [{'Raw','with IT'}];
-VectorElements = [1:numel(String)]; % 1 2 3, Value  = 2
-tmp = find(VectorElements ~= Value); % 1 3
-IndexVector = VectorElements(tmp); % 1 2 3 (in 1 3) = 1 3
+LEGEND = [{'Raw','with IT','Carrier Smoothing'}];
 Type = get(handles.WTypeSelection,'Value');
 
-East(:,Value) = handles.RX_Position_ENU(:,1); % column 1
-North(:,Value) = handles.RX_Position_ENU(:,2); % column 1
-std_East(Value) = std(East(:,Value));
-std_North(Value) = std(North(:,Value));
+East = handles.RX_Position_ENU(:,1);
+North = handles.RX_Position_ENU(:,2);
+std_East = std(East);
+std_North = std(North);
+
+East_CS = handles.RX_Position_ENU_smoothed(:,1);
+North_CS = handles.RX_Position_ENU_smoothed(:,2);
+std_East_CS = std(East_CS);
+std_North_CS = std(North_CS);
 
 if ~WNLSE
-    East_nonIT(:,Value) = handles.RX_Position_ENU_NLSE(:,1);
-    North_nonIT(:,Value) = handles.RX_Position_ENU_NLSE(:,2);
-    std_East_nonIT(Value) = std(East_nonIT(:,Value));
-    std_North_nonIT(Value) = std(North_nonIT(:,Value));
+    East_nonIT = handles.RX_Position_ENU_NLSE(:,1);
+    North_nonIT = handles.RX_Position_ENU_NLSE(:,2);
     string = 'LSE';
 elseif WNLSE
-    Index = 0;
-    East_nonIT(:,Value) = handles.RX_Position_ENU_W(Type).NLSE(:,1);
-    North_nonIT(:,Value) = handles.RX_Position_ENU_W(Type).NLSE(:,2);
-    std_East_nonIT(Value) = std(East_nonIT(:,Value));
-    std_North_nonIT(Value) = std(North_nonIT(:,Value));
+    East_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,1);
+    North_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,2);
     string = 'Weighted LSE';
 end
+std_East_nonIT = std(East_nonIT);
+std_North_nonIT = std(North_nonIT);
 
-sigmas = [std_East, std_East_nonIT, std_North, std_North_nonIT];
-Titles = [{'East'}, {'East no IT'}, {'North'}, {'North non IT'}];
+sigmas = [std_East, std_East_nonIT, std_East_CS, std_North, std_North_nonIT, std_North_CS];
+Titles = [{'East'}, {'East no IT'}, {'East Carrier Smoothing'}, {'North'}, {'North non IT'}, {'North Carrier Smoothing'}];
 if WNLSE
-    Names = [String(Type)];
+    Names = String(Type);
 else
-    Names = [{'NLSE'}];
+    Names = {'NLSE'};
 end
 for index = 1 : size(sigmas,1)
     Rows(index,:) = num2cell(sigmas(index,:));
@@ -554,25 +568,28 @@ fprintf('------------------------------------------------------');
 STD = [{'Weight \ Coordinate'},Titles;Names,Rows]
 
 axes(handles.Plot1)
-% for k = 1 : 3
 hold off
 plot(East_nonIT,North_nonIT,'b.','linewidth',1);
 hold on
 plot(East,North,'g.','linewidth',1);
+hold on
+plot(East_CS,North_CS,'r.','linewidth',1);
 title(sprintf('Recevier Position for %s and weight %s (Raw and I/T Corrected).',string, String{ValueToString}))
 xlabel('East (m)')
 ylabel('North (m)')
-% hold on
-% plot(0,0,'ko','markersize',100,'linewidth',2)
 legend(LEGEND)
-xmin = max(min(East_nonIT),min(East));
-xmax = min(max(East_nonIT),max(East));
-ymin = max(min(North_nonIT),min(North));
-ymax = min(max(North_nonIT),max(North));
-x = max(abs(xmin), abs(xmax));
-y = max(abs(ymin), abs(ymax));
-xlim([-x x])
-ylim([-y y])
+% xmin = max(min(East_nonIT),min(East));
+% xmax = min(max(East_nonIT),max(East));
+% ymin = max(min(North_nonIT),min(North));
+% ymax = min(max(North_nonIT),max(North));
+% xmin = max(xmin,min(East_CS));
+% xmax = min(xmax,max(East_CS));
+% ymin = max(ymin,min(East_CS));
+% ymax = min(ymax,max(East_CS));
+% x = max(abs(xmin), abs(xmax));
+% y = max(abs(ymin), abs(ymax));
+% xlim([-x x])
+% ylim([-y y])
 grid on
 
 
@@ -592,12 +609,18 @@ if ~WNLSE
     handles.RX_Position_ENU = handles.RX_Position_ENU_NLSE_IT;
     handles.RX_Position_LLH = handles.RX_Position_LLH_NLSE_IT;
     handles.DOP = handles.DOP_NLSE_IT;
+    handles.RX_Position_ENU_smoothed = handles.RX_Position_ENU_UWsmoothed;
+    handles.RX_Position_LLH_smoothed = handles.RX_Position_LLH_UWsmoothed;
+    handles.DOP_smoothed = handles.DOP_UWsmoothed;
 else
     Type = get(handles.WTypeSelection,'value');
     set(handles.WTypeSelection,'Enable','on');
     handles.RX_Position_ENU = handles.RX_Position_ENU_W(Type).NLSE_IT;
     handles.RX_Position_LLH = handles.RX_Position_LLH_W(Type).NLSE_IT;
     handles.DOP = handles.DOP_W(Type).NLSE_IT;
+    handles.RX_Position_ENU_smoothed = handles.RX_Position_ENU_Wsmoothed(Type).sm;
+    handles.RX_Position_LLH_smoothed = handles.RX_Position_LLH_Wsmoothed(Type).sm;
+    handles.DOP_smoothed = handles.DOP_Wsmoothed(Type).sm;
 end
 
 guidata(hObject,handles);
@@ -625,17 +648,26 @@ end
 % set(handles.WTypeSelection,'Enable','on');
 
 if ~strcmp(Call,'PVT_OpeningFcn')
-    if strcmp(get(hObject,'string'),'Orbits') || strcmp(get(hObject,'string'),'LAT - LON')...
-            || strcmp(get(hObject,'string'),'Position Estimates') || strcmp(get(hObject,'string'),'LOAD')
-        set(handles.MinEpoch,'Enable','off')
-        set(handles.MaxEpoch,'Enable','off')
-        set(handles.SVSelection,'Enable','off')
-        set(handles.SmoothNumber,'Enable','off')
-    else
+    if strcmp(get(hObject,'string'),'Elevation')...
+            || strcmp(get(hObject,'string'),'Azimuth')...
+            || strcmp(get(hObject,'string'),'Pseudorange')...
+            || strcmp(get(hObject,'string'),'Carrier Phase')...
+            || strcmp(get(hObject,'string'),'Code - Carrier')...
+            || strcmp(get(hObject,'string'),'SNR')...
         set(handles.MinEpoch,'Enable','on')
         set(handles.MaxEpoch,'Enable','on')
         set(handles.SVSelection,'Enable','on')
+    else
+        set(handles.MinEpoch,'Enable','off')
+        set(handles.MaxEpoch,'Enable','off')
+        set(handles.SVSelection,'Enable','off')
+    end
+    if strcmp(get(hObject,'string'),'Code - Carrier')...
+            || strcmp(get(hObject,'string'),'Position Estimates')...
+            || strcmp(get(hObject,'string'),'ENU')
         set(handles.SmoothNumber,'Enable','on')
+    else
+        set(handles.SmoothNumber,'Enable','off')
     end
 end
 
@@ -969,3 +1001,38 @@ function SmoothNumber_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in CarrierSmoothing.
+function CarrierSmoothing_Callback(hObject, eventdata, handles)
+% hObject    handle to CarrierSmoothing (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%Caculate Carrier Smoothing
+handles.CMC = handles.mC1 - handles.mL1*handles.lambda;
+[handles.smoothed,handles.cycle_slip] = Carrier_Smoothing(handles.mC1,handles.mL1,handles.smoothnumber,handles.CMC);
+
+%Recaculate Tracked_smoothed
+handles.Tracked_smoothed = zeros(handles.Nb_Epoch,length(handles.SVTracked));
+for num_SV=1:length(handles.SVTracked)
+    handles.Tracked_smoothed(:,num_SV) = handles.smoothed(:,handles.SVTracked(num_SV));
+end
+handles.Tracked_smoothed(handles.Tracked_smoothed==0) = nan;
+
+
+%Smoothed Non Linear LSE
+[handles.RX_Position_XYZ_UWsmoothed, handles.RX_ClockError_UWsmoothed, handles.Matrix_UWsmoothed] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NLSE',0,handles.Tiono,handles.Ttropo,7,[],handles.MessageBox);
+[handles.RX_Position_LLH_UWsmoothed, handles.RX_Position_ENU_UWsmoothed, handles.Matrix_UWsmoothed, handles.DOP_UWsmoothed] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_UWsmoothed,handles.Nb_Epoch,handles.Matrix_UWsmoothed);
+
+% Smoothed Weighted (SNR) Non Linear LSE - ATMOSPHERIC CORRECTION
+[handles.RX_Position_XYZ_Wsmoothed(1).sm, handles.RX_ClockError_Wsmoothed(1).sm, handles.Matrix_Wsmoothed(1).sm] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NWLSE',1,handles.Tiono,handles.Ttropo,8,[],handles.MessageBox);
+[handles.RX_Position_LLH_Wsmoothed(1).sm, handles.RX_Position_ENU_Wsmoothed(1).sm, handles.Matrix_Wsmoothed(1).sm, handles.DOP_Wsmoothed(1).sm] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_Wsmoothed(1).sm,handles.Nb_Epoch,handles.Matrix_Wsmoothed(1).sm);
+
+% Smoothed Weighted (SNR + ELEVATION) Non Linear LSE - ATMOSPHERIC CORRECTION
+[handles.RX_Position_XYZ_Wsmoothed(2).sm, handles.RX_ClockError_Wsmoothed(2).sm, handles.Matrix_Wsmoothed(2).sm] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NWLSE',2,handles.Tiono,handles.Ttropo,9,handles.Elevation_Azimuth,handles.MessageBox);
+[handles.RX_Position_LLH_Wsmoothed(2).sm, handles.RX_Position_ENU_Wsmoothed(2).sm, handles.Matrix_Wsmoothed(2).sm, handles.DOP_Wsmoothed(2).sm] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_Wsmoothed(2).sm,handles.Nb_Epoch,handles.Matrix_Wsmoothed(2).sm);
+
+guidata(hObject,handles);
+
+

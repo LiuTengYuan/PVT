@@ -59,13 +59,14 @@ for epoch=1:Nb_Epoch
         fprintf("\n RX Position Processig... ");
         fprintf(" \nTotal Completed - %.2f , Call %d out of %d. \n",ProcessingCompleted, CallNumber, 6);
     end
-    if CallNumber == 7
+    if CallNumber >= 7
+        smoothedCallNumber = CallNumber - 6;
         if mod(ProcessingCompleted,10)==0
-            set(MessageBox,'string',sprintf(" Carrier Smoothing Processing...\n Total Completed - %.2f %%\n",ProcessingCompleted));
+            set(MessageBox,'string',sprintf(" Carrier Smoothing Processing...\n Total Completed - %.2f %%\n   Call %d out of %d.",ProcessingCompleted,smoothedCallNumber,3));
             pause(0.001)
         end
         fprintf("\n Carrier Smoothing Processig... ");
-        fprintf(" \nTotal Completed - %.2f %%\n",ProcessingCompleted);
+        fprintf(" \nTotal Completed - %.2f , Call %d out of %d. \n",ProcessingCompleted, smoothedCallNumber, 3);
     end
 end
 
@@ -74,7 +75,7 @@ if CallNumber <= 6
     fprintf("\n SV Position Processing completed. ");
     fprintf("\n RX Position Processing completed. \n");
     set(MessageBox,'string',sprintf("\n SV Position Processing completed.\n RX Position Processing completed. \n"));
-elseif CallNumber == 7
+elseif CallNumber >= 7
     clc
     fprintf("\n SV Position Processing completed. ");
     fprintf("\n RX Position Processing completed. ");

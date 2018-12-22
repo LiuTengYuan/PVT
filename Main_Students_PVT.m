@@ -76,6 +76,7 @@ end
 Total_Nb_Sat = length(find(sum(mTracked)~=0));
 
 handles.Nb_Epoch = Nb_Epoch;
+handles.vNb_Sat = vNb_Sat;
 
 %%-------------------------------------------------------------------------
 %% Pseudorange Model
@@ -172,6 +173,7 @@ for PRN=handles.SVTracked
     
 end
 
+handles.Result = Result;
 handles.SV = SV;
 handles.INDEX = length(handles.SVTracked);
 
@@ -265,6 +267,7 @@ end
 elevation_SV(elevation_SV==0) = nan;
 azimuth_SV(azimuth_SV==0) = nan;
 
+handles.Elevation_Azimuth = Elevation_Azimuth;
 handles.elevation_SV = elevation_SV;
 handles.azimuth_SV = azimuth_SV;
 
@@ -287,6 +290,9 @@ handles.azimuth_SV = azimuth_SV;
 [Tiono] = Ionospheric_Correction(Iono_a, Iono_b, Elevation_Azimuth, handles.RX_Position_LLH_NLSE, mEpoch, Total_Nb_Sat);
 [Ttropo] = Tropospheric_Correction(handles.RX_Position_LLH_NLSE, mEpoch, Elevation_Azimuth, Total_Nb_Sat);
 
+handles.Tiono = Tiono;
+handles.Ttropo = Ttropo;
+
 %Non Linear LSE
 [handles.RX_Position_XYZ_NLSE_IT, handles.RX_ClockError_NLSE_IT, handles.Matrix_NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,4,[],handles.MessageBox);
 [handles.RX_Position_LLH_NLSE_IT, handles.RX_Position_ENU_NLSE_IT, handles.Matrix_NLSE_IT, handles.DOP_NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE_IT,Nb_Epoch,handles.Matrix_NLSE_IT);
@@ -301,43 +307,5 @@ handles.azimuth_SV = azimuth_SV;
 %%-------------------------------------------------------------------------
 
 %%-------------------------------------------------------------------------
-%% Carrier Smoothing
-
-Smoothed_Number = handles.smoothnumber;
-handles.CMC = handles.mC1 - handles.mL1*lambda;
-[handles.smoothed,handles.cycle_slip] = Carrier_Smoothing(handles.mC1,handles.mL1,Smoothed_Number,handles.CMC);
-
-% Smoothed Weighted (SNR) Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_smoothed, handles.RX_ClockError_smoothed, handles.Matrix_smoothed] = RX_Position_and_Clock(Result,handles.smoothed,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,7,Elevation_Azimuth,handles.MessageBox);
-[handles.RX_Position_LLH_smoothed, handles.RX_Position_ENU_smoothed, handles.Matrix_smoothed, handles.DOP_smoothed] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_smoothed,Nb_Epoch,handles.Matrix_smoothed);
-
-%Recaculate Tracked_smoothed
-handles.Tracked_smoothed = zeros(Nb_Epoch,length(handles.SVTracked));
-for num_SV=1:length(handles.SVTracked)
-    handles.Tracked_smoothed(:,num_SV) = handles.smoothed(:,handles.SVTracked(num_SV));
-end
-handles.Tracked_smoothed(handles.Tracked_smoothed==0) = nan;
-
-
-% figure;
-% plot(handles.CMC(1:1500,31));
-% hold on;
-% plot(CMC_smoothed(1:1500,31));
-% legend('Unsmoothed','smoothed')
-% title('CMC')
-% 
-% figure;
-% plot(handles.RX_Position_ENU_W(1).NLSE_IT(:,1),handles.RX_Position_ENU_W(1).NLSE_IT(:,2),'.');
-% hold on;
-% plot(handles.RX_Position_ENU_smoothed(:,1),handles.RX_Position_ENU_smoothed(:,2),'.');
-% legend('Unsmoothed','smoothed')
-% title('Position')
-% 
-% figure;
-% plot(handles.RX_Position_ENU_W(1).NLSE_IT(:,1));
-% hold on;
-% plot(handles.RX_Position_ENU_smoothed(:,1));
-% legend('Unsmoothed','smoothed')
-% title('East Direction')
 
 end
