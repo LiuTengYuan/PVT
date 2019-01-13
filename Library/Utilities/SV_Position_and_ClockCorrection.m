@@ -1,4 +1,4 @@
-function [vSatellite_xyz, fSV_ClockCorr] = SV_Position_and_ClockCorrection(vEphemeris, iT_SV, iUser_SoW, iDelta_t_SV)
+function [rSatellite_xyz, vSatellite_xyz, fSV_ClockCorr] = SV_Position_and_ClockCorrection(vEphemeris, iT_SV, iUser_SoW, iDelta_t_SV)
 %--------------------------------------------------------------------------
 % Copyright © ENAC, 2015.
 % ENAC : http://www.enac.fr/.
@@ -47,10 +47,13 @@ Cuc = vEphemeris(27); %Amplitude of the Cosine Harmonic Correction Term to the O
 Cis = vEphemeris(28); %Amplitude of the Sine Harmonic Correction Term to the Angle of Inclination
 Cic = vEphemeris(29); %Amplitude of the Cosine Harmonic Correction Term to the Angle of Inclination
 
-%Caculate Satellite Position
+%% Caculate Satellite Position
 A = sqrtA^2; %Semi-Major Axis
 n0 = sqrt(mu/A^3); %Computed Mean Motion(rad/sec)
 delta_tr = 0; %Relativistic Correction Term
+
+saved = iT_SV;
+iT_SV = saved;
 
 while(1)
     iT_SV_corrected = iT_SV-delta_tr; %GPS Time at Time of Transmission
@@ -61,15 +64,20 @@ while(1)
             tk = tk+604800;
     end
     n = n0+deltaN; %Corrected Mean Motion
-    Mk = M0+n*tk; %Mean Anomaly
+    Mk = M0+n*tk; %Mean Anomaly    
     E0 = Mk;
     Ek = Mk+e*sin(E0); %Eccentric Anomaly
+%     Mk_der = n;   % for velocity
+%     Ek_der = Mk_der/(1-e*cos(Ek)); % for velocity
     
     %Iteration for Kepler's Equation
     while abs(Ek-E0)>=(10^-12)
         E0 = Ek;
         Ek = Mk+e*sin(E0);
+%         Mk_der = Ek_der - e-cos(Ek)*Ek_der;
+%         Ek_der = Mk_der/(1-e*cos(Ek));
     end
+    
     
     delta_tr_new = F*(e*(sqrtA))*sin(Ek);
     fSV_ClockCorr = iDelta_t_SV+delta_tr;
@@ -79,6 +87,9 @@ while(1)
     end
     delta_tr = delta_tr_new;
 end
+Ek_der = n/(1-e*cos(Ek));
+Mk_der = Ek_der - e-cos(Ek)*Ek_der;
+
 vk = atan2(sqrt(1-e^2)*sin(Ek),(cos(Ek)-e)); %True Anomaly
 Ek = acos((e+cos(vk))/(1+e*cos(vk))); %Eccentric Anomaly
 thetak = vk+omega; %Argument of Latitude
@@ -101,7 +112,7 @@ OmegaK = Omega0+(OmegaDot-OmegaEDot)*tk-OmegaEDot*toe; %Corrected Longitude of A
 %Earth-Fixed Coordinates of Satellite(Transmission)
 xk = xko*cos(OmegaK)-yko*cos(ik)*sin(OmegaK);
 yk = xko*sin(OmegaK)+yko*cos(ik)*cos(OmegaK);
-zk = yko*sin(ik);
+zk = yko*sin(ik);   
 
 %Earth-Fixed Coordinates of Satellite(Reception)
 %ECI is equal to ECEF at transmission time
@@ -113,7 +124,55 @@ SV_Pos_ECI = [xk;yk;zk];
 SV_Pos_ECEF = R_ECI2ECEF*SV_Pos_ECI; % = inv(R_ECEF2ECI)*SV_Pos_ECI
 %x = A\b is computed differently than x = inv(A)*b and is recommended for solving systems of linear equations.
 
-vSatellite_xyz = SV_Pos_ECEF.'; %B = A.' -> B = transpose(A)
+rSatellite_xyz = SV_Pos_ECEF.'; %B = A.' -> B = transpose(A)
 
+%% Caculate Satellite Velocity
+
+vk_der = A*sqrt(1 - e^2)*n/rk^2; %sin(Ek)*(Ek_der*(1 + e*cos(vk)))/(sin(vk)*(1 - e*cos(Ek)));
+thetak_der = vk_der;
+
+%Second Harmonic Perturbations
+delta_uk_der = thetak_der*2*(Cus*cos(2*thetak)-Cuc*sin(2*thetak)); %Argument of Latitude Correction
+delta_rk_der = thetak_der*2*(Crs*cos(2*thetak)-Crc*sin(2*thetak)); %Radius Correction
+delta_ik_der = thetak_der*2*(Cis*cos(2*thetak)-Cic*sin(2*thetak)); %Inclination Correction
+
+uk_der = thetak_der+delta_uk_der; %Corrected Argument of Latitude
+rk_der = A*e*sin(Ek)*Ek_der+delta_rk_der; %Corrected Radius
+ik_der = delta_ik_der * 0 +IDOT; %Corrected Inclination
+
+%Position in Orbital Plane
+xko_der = rk_der*cos(uk) - yko*uk_der;
+yko_der = rk_der*sin(uk) + xko*uk_der;
+
+OmegaK_der = (OmegaDot-OmegaEDot); %Corrected Longitude of Ascending Node
+
+
+Rie = [cos(OmegaK) -sin(OmegaK)*cos(ik) sin(OmegaK)*sin(ik);...
+    sin(OmegaK) cos(OmegaK)*cos(ik) -cos(OmegaK)*sin(ik);...
+    0 sin(ik) cos(ik)];
+
+Rie_der = [-sin(OmegaK)*OmegaK_der -cos(OmegaK)*cos(ik)*OmegaK_der cos(OmegaK)*sin(ik)*OmegaK_der;...
+    cos(OmegaK)*OmegaK_der -sin(OmegaK)*cos(ik)*OmegaK_der sin(OmegaK)*sin(ik)*OmegaK_der;...
+    0 0 0];
+
+r_velocity = Rie_der * [xko yko 0].' + Rie * [xko_der yko_der 0].';
+
+% xk_der = xko_der*cos(OmegaK) - yko_der*cos(ik)*sin(OmegaK) + yko*sin(ik)*sin(OmegaK)*ik_der - yk*OmegaK_der;
+% yk_der = xko_der*sin(OmegaK) + yko_der*cos(ik)*cos(OmegaK) - yko*sin(ik)*cos(OmegaK)*ik_der + xk*OmegaK_der;
+% zk_der = yko_der*sin(ik) + yko*cos(ik)*ik_der;
+
+xk_der = r_velocity(1);
+yk_der = r_velocity(2);
+zk_der = r_velocity(3);
+
+%Earth-Fixed Coordinates of Satellite(Reception)
+%ECI is equal to ECEF at transmission time
+%Now we have to calculate the SV positon at receiver time in ECEF(changed)
+SV_Vel_ECI = [xk_der;yk_der;zk_der];
+SV_Vel_ECEF = R_ECI2ECEF*SV_Vel_ECI; % = inv(R_ECEF2ECI)*SV_Pos_ECI
+
+vSatellite_xyz = SV_Vel_ECEF.'; %B = A.' -> B = transpose(A)
+
+% vSatellite_xyz = [xk_der;yk_der;zk_der].';
 
 

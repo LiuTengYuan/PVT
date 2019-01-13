@@ -78,15 +78,18 @@ Total_Nb_Sat = length(find(sum(mTracked)~=0));
 handles.Nb_Epoch = Nb_Epoch;
 handles.vNb_Sat = vNb_Sat;
 
+handles.TotalSVTracked = find(sum(mTracked)~=0);
+
+
 %%-------------------------------------------------------------------------
 %% Pseudorange Model
 
-switch handles.PseudorangeModel
-    case 'Code'
-        handles.mC1 = handles.mC1;
-    case 'CodeAndCarrier'
-        %         mC1 = CODE + CARREIR;
-end
+% switch handles.PseudorangeModel
+%     case 'Code'
+%         handles.mC1 = handles.mC1;
+%     case 'CodeAndCarrier'
+%         %         mC1 = CODE + CARREIR;
+% end
 %%-------------------------------------------------------------------------
 
 %% Avoid SVs tracked
@@ -100,7 +103,7 @@ if handles.SVListFilter ~= 0
         vNb_Sat(epoch) = sum(mTracked(epoch,:));
     end
 end
-
+handles.vNb_Sat = vNb_Sat;
 
 %%-------------------------------------------------------------------------
 %% Compute Transmission Time  &  SV Position and ClockCorrection
@@ -114,7 +117,7 @@ lambda = c/f; %(m) L1 wavelength
 Result(Nb_Epoch) = struct(); % This way automatically allocate memory for all Nb_Epoch structures.
 Result_Info(Nb_Epoch) = struct();
 
-Titles = {'SV # PRN','SV_X','SV_Y','SV_Z','SV_ClockError_second','SV_ClockError_meter'};
+Titles = {'SV # PRN','SV_X','SV_Y','SV_Z', 'SV_X_der','SV_Y_der','SV_Z_der','SV_ClockError_second','SV_ClockError_meter'};
 
 
 for epoch=1:Nb_Epoch
@@ -128,10 +131,11 @@ for epoch=1:Nb_Epoch
             %Select Ephermis (set the best fits SV iPRN at tiem iUser_Nos)
             [vEphemeris] = SelectEphemeris(Ephem, PRN, iUser_NoS(epoch));
             [iDelta_t_SV, iT_SV] = ComputeTransmissionTime(vEphemeris, iUser_SoW(epoch), f_C1);
-            [vSatellite_xyz, fSV_ClockCorr] = SV_Position_and_ClockCorrection(vEphemeris, iT_SV, iUser_SoW(epoch), iDelta_t_SV);
+            [rSatellite_xyz, vSatellite_xyz, fSV_ClockCorr] = SV_Position_and_ClockCorrection(vEphemeris, iT_SV, iUser_SoW(epoch), iDelta_t_SV);
             fSV_ClockCorr_meter = fSV_ClockCorr*c;
-            Result(epoch).SV(count,:) =[PRN, vSatellite_xyz, fSV_ClockCorr, fSV_ClockCorr_meter];
-            Result_Info(epoch).INFO = [Result_Info(epoch).INFO; num2cell([PRN, vSatellite_xyz,fSV_ClockCorr, fSV_ClockCorr_meter])];
+            Result(epoch).SV(count,:) =[PRN, rSatellite_xyz, vSatellite_xyz, fSV_ClockCorr, fSV_ClockCorr_meter];
+            %                            1       2 3 4           5 6 7             8                9
+            Result_Info(epoch).INFO = [Result_Info(epoch).INFO; num2cell([PRN, rSatellite_xyz, vSatellite_xyz, fSV_ClockCorr, fSV_ClockCorr_meter])];
             count = count+1;
             
         end
@@ -146,6 +150,8 @@ for epoch=1:Nb_Epoch
         pause(0.01)
     end
 end
+handles.iUser_NoS = iUser_NoS;
+handles.iUser_SoW = iUser_SoW;
 
 %%-------------------------------------------------------------------------
 %% Plot Satellite Orbit
@@ -180,8 +186,8 @@ handles.INDEX = length(handles.SVTracked);
 axes(handles.Plot1)
 hold off
 for index = 1 : length(handles.SVTracked)
-    EpochToPlotIndex = find(mTracked(:,handles.SVTracked(index)) ~= 0 );
-    EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
+    EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
+    EpochToPlot = EpochToPlotIndex(round(length(EpochToPlotIndex)/2));
     scatter3(SV(index).Result_x(EpochToPlot)/1000,SV(index).Result_y(EpochToPlot)/1000,SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('SV # ', num2str(handles.SVTracked(index))));
     legend('-DynamicLegend')
     hold all
@@ -222,13 +228,16 @@ handles.Tracked_mL1(handles.Tracked_mL1==0) = nan;
 
 %%-------------------------------------------------------------------------
 
-%% Caculate Receiver Position and Receiver Clock Error
+%% Caculate Receiver Position and Receiver Clock Error NLSE
 
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
 
+handles.CallNumber = 0;
+ExpectedCalls = 4;
+
 % Non Linear LSE - NO ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_NLSE, handles.RX_ClockError_NLSE, handles.Matrix_NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,1,[],handles.MessageBox);
+[handles.RX_Position_XYZ_NLSE, handles.RX_Velocity_XYZ_NLSE, handles.RX_ClockError_NLSE, handles.Matrix_NLSE,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
 [handles.RX_Position_LLH_NLSE, handles.RX_Position_ENU_NLSE, handles.Matrix_NLSE, handles.DOP_NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE,Nb_Epoch,handles.Matrix_NLSE);
 
 % SV Latitude, Longitude and Height.
@@ -272,15 +281,17 @@ handles.elevation_SV = elevation_SV;
 handles.azimuth_SV = azimuth_SV;
 
 
+%% Caculate Receiver Position and Receiver Clock Error WLSE
+
 % Weighted (SNR) Non Linear LSE - NO ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(1).NLSE, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,2,[],handles.MessageBox);
+[handles.RX_Position_XYZ_W(1).NLSE, handles.RX_Velocity_XYZ_W(1).NLSE, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
 [handles.RX_Position_LLH_W(1).NLSE, handles.RX_Position_ENU_W(1).NLSE, handles.Matrix_W(1).NLSE, handles.DOP_W(1).NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(1).NLSE,Nb_Epoch,handles.Matrix_W(1).NLSE);
 %%-------------------------------------------------------------------------
 
-% Weighted (SNR + ELEVATION) Non Linear LSE - NO ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(2).NLSE, handles.RX_ClockError_W(2).NLSE, handles.Matrix_W(2).NLSE] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',2,Tiono,Ttropo,3,Elevation_Azimuth,handles.MessageBox);
-[handles.RX_Position_LLH_W(2).NLSE, handles.RX_Position_ENU_W(2).NLSE, handles.Matrix_W(2).NLSE, handles.DOP_W(2).NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE,Nb_Epoch,handles.Matrix_W(2).NLSE);
-%%-------------------------------------------------------------------------
+% % Weighted (SNR + ELEVATION) Non Linear LSE - NO ATMOSPHERIC CORRECTION
+% [handles.RX_Position_XYZ_W(2).NLSE, handles.RX_Velocity_XYZ_W(2).NLSE, handles.RX_ClockError_W(2).NLSE, handles.Matrix_W(2).NLSE,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',2,Tiono,Ttropo,handles.CallNumber,Elevation_Azimuth,handles.MessageBox,ExpectedCalls);
+% [handles.RX_Position_LLH_W(2).NLSE, handles.RX_Position_ENU_W(2).NLSE, handles.Matrix_W(2).NLSE, handles.DOP_W(2).NLSE] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE,Nb_Epoch,handles.Matrix_W(2).NLSE);
+% %%-------------------------------------------------------------------------
 
 
 
@@ -294,18 +305,19 @@ handles.Tiono = Tiono;
 handles.Ttropo = Ttropo;
 
 %Non Linear LSE
-[handles.RX_Position_XYZ_NLSE_IT, handles.RX_ClockError_NLSE_IT, handles.Matrix_NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,4,[],handles.MessageBox);
+[handles.RX_Position_XYZ_NLSE_IT, handles.RX_Velocity_XYZ_NLSE_IT, handles.RX_ClockError_NLSE_IT, handles.Matrix_NLSE_IT,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
 [handles.RX_Position_LLH_NLSE_IT, handles.RX_Position_ENU_NLSE_IT, handles.Matrix_NLSE_IT, handles.DOP_NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE_IT,Nb_Epoch,handles.Matrix_NLSE_IT);
 
 % Weighted (SNR) Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(1).NLSE_IT, handles.RX_ClockError_W(1).NLSE, handles.Matrix_W(1).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,5,[],handles.MessageBox);
+[handles.RX_Position_XYZ_W(1).NLSE_IT, handles.RX_Velocity_XYZ_W(1).NLSE_IT, handles.RX_ClockError_W(1).NLSE_IT, handles.Matrix_W(1).NLSE_IT,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
 [handles.RX_Position_LLH_W(1).NLSE_IT, handles.RX_Position_ENU_W(1).NLSE_IT, handles.Matrix_W(1).NLSE_IT, handles.DOP_W(1).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(1).NLSE_IT,Nb_Epoch,handles.Matrix_W(1).NLSE_IT);
 
-% Weighted (SNR + ELEVATION) Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_W(2).NLSE_IT, handles.RX_ClockError_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT] = RX_Position_and_Clock(Result,handles.mC1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',2,Tiono,Ttropo,6,Elevation_Azimuth,handles.MessageBox);
-[handles.RX_Position_LLH_W(2).NLSE_IT, handles.RX_Position_ENU_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT, handles.DOP_W(2).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE_IT,Nb_Epoch,handles.Matrix_W(2).NLSE_IT);
-%%-------------------------------------------------------------------------
+% % Weighted (SNR + ELEVATION) Non Linear LSE - ATMOSPHERIC CORRECTION
+% [handles.RX_Position_XYZ_W(2).NLSE_IT, handles.RX_Velocity_XYZ_W(2).NLSE_IT, handles.RX_ClockError_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',2,Tiono,Ttropo,handles.CallNumber,Elevation_Azimuth,handles.MessageBox,ExpectedCalls);
+% [handles.RX_Position_LLH_W(2).NLSE_IT, handles.RX_Position_ENU_W(2).NLSE_IT, handles.Matrix_W(2).NLSE_IT, handles.DOP_W(2).NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_W(2).NLSE_IT,Nb_Epoch,handles.Matrix_W(2).NLSE_IT);
+% %%-------------------------------------------------------------------------
 
 %%-------------------------------------------------------------------------
 
+handles.mEpoch = mEpoch;
 end

@@ -10,13 +10,14 @@ for index = 1 : handles.INDEX
     
     %% Satellite Information
     azi(index)=handles.azimuth_SV(EpochToPlot(index),index);  %Azimuth in degrees
-    el(index)=handles.elevation_SV(EpochToPlot(index),index); %Elevation angle in degrees
+    el(index)=handles.elevation_SV(EpochToPlot(index),index);             %Elevation angle in degrees
 end
 
 %% Plot Figure
 a=azi*deg2rad;                                  %Convert degrees to radians
 r=90-el;                                        %Convert elevation angle to zenith
 
+axes(handles.Plot1);
 for i=1:size(azi,2), 
     svx(i)=r(i)*cos(a(i))  ; svy(i)=r(i)*sin(a(i)); %Calculate polar co-ordinates
 end
@@ -25,9 +26,9 @@ hold on
 plot( svx,svy,'.','markers',50);               %Plot satellite location
 hold off
 
-%% Format output 
+%% Format output
 for i=1:length(prn),
-    text(svx(i)+7,svy(i),strcat('SV',num2str(prn(i))), 'FontSize' ,10,'color','b','fontweight','bold') ; %Add PRN labels to each point
+    text(svx(i)+7,svy(i),strcat('SV ',num2str(prn(i))), 'FontSize' ,12,'color','b','fontweight','bold') ; %Add PRN labels to each point
 end
 
 title('Sky Plot','fontweight','bold')

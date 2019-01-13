@@ -31,6 +31,10 @@ global c;
 GPS_time = mEpoch(:,2);
 alpha_n = Iono_a;   beta_n = Iono_b;
 phi_u = deg2rad(RX_Position_LLH(:,1));   lambda_u = deg2rad(RX_Position_LLH(:,2));
+%----------------------
+phi_u = mod(phi_u,pi);
+lambda_u = mod(lambda_u,pi)/pi;
+%----------------------
 Nb_Epoch = length(mEpoch);
 E = zeros(Nb_Epoch,Total_Nb_Sat);   A = zeros(Nb_Epoch,Total_Nb_Sat);
 SVnum = zeros(Nb_Epoch,1);
@@ -38,6 +42,13 @@ for epoch=1:Nb_Epoch
     SVnum(epoch) = length(Elevation_Azimuth(epoch).SV(:,1));
     E(epoch,1:SVnum(epoch)) = deg2rad(Elevation_Azimuth(epoch).SV(:,2)');
     A(epoch,1:SVnum(epoch)) = deg2rad(Elevation_Azimuth(epoch).SV(:,3)');
+    
+    %----------------------
+    E(epoch,1:SVnum(epoch)) = mod(E(epoch,1:SVnum(epoch)),pi)/pi;
+    A(epoch,1:SVnum(epoch)) = mod(A(epoch,1:SVnum(epoch)),pi)/pi;
+    %----------------------
+
+    
 end
 
 psi = zeros(Nb_Epoch,Total_Nb_Sat);
@@ -51,10 +62,17 @@ X = zeros(Nb_Epoch,Total_Nb_Sat);
 F = zeros(Nb_Epoch,Total_Nb_Sat);
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 
+
+
 for epoch=1:Nb_Epoch
     for num_SV = 1:SVnum(epoch)
         %Calculate the earth-centred angle (elevation  in semicircles)
         psi(epoch,num_SV) = 0.0137/(E(epoch,num_SV)+0.11)-0.022;
+        
+        %----------------------
+        psi(epoch,num_SV) = mod(psi(epoch,num_SV),pi)/pi;
+        %----------------------
+
         %Compute the latitude of the Ionospheric Pierce Point (IPP)
         phi_i(epoch,num_SV) = phi_u(epoch)+psi(epoch,num_SV)*cos(A(epoch,num_SV));
         if phi_i(epoch,num_SV)>0.416
@@ -63,10 +81,26 @@ for epoch=1:Nb_Epoch
         if phi_i(epoch,num_SV)<-0.416
             phi_i(epoch,num_SV) = -0.416;
         end
+        
+        %----------------------
+        phi_i(epoch,num_SV) = mod(phi_i(epoch,num_SV),pi)/pi;
+        %----------------------
+
+
         %Compute the longitude of the IPP
         lambda_i(epoch,num_SV) = lambda_u(epoch)+psi(epoch,num_SV)*sin(A(epoch,num_SV))/cos(phi_i(epoch,num_SV));
+        
+        %----------------------
+        lambda_i(epoch,num_SV) = mod(lambda_i(epoch,num_SV),pi)/pi;
+        %----------------------
+
         %Find the geomagnetic latitude of the IPP
         phi_m(epoch,num_SV) = phi_i(epoch,num_SV)+0.064*cos(lambda_i(epoch,num_SV)-1.617);
+        
+        %----------------------
+        phi_m(epoch,num_SV) = mod(phi_m(epoch,num_SV),pi)/pi;
+        %----------------------
+        
         %Find the local time at the IPP
         t(epoch,num_SV) = mod(4.32e4*lambda_i(epoch,num_SV)+GPS_time(epoch),86400);
         %Compute the amplitude of ionospheric delay
@@ -93,7 +127,7 @@ for epoch=1:Nb_Epoch
         else
             Tiono(epoch,num_SV) = F(epoch,num_SV)*5e-9;
         end
-        Tiono(epoch,num_SV) = Tiono(epoch,num_SV)*c;
+        Tiono(epoch,num_SV) = Tiono(epoch,num_SV) * c;
     end
 end
 end

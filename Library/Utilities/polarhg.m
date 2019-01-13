@@ -219,7 +219,7 @@ if ~HoldFlag
         if i == max(size(th))
             loc = int2str(0);
         else
-            loc = int2str(180+i*tstep);
+            loc = int2str(-180+i*tstep);
         end
         text(-Rt*cst(i),-Rt*snt(i),loc,'horizontalalignment','center');
     end

@@ -26,7 +26,7 @@ function varargout = PVT(varargin)
 
 % Edit the above text to modify the response to help PVT
 
-% Last Modified by GUIDE v2.5 22-Dec-2018 17:58:51
+% Last Modified by GUIDE v2.5 09-Jan-2019 21:16:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -72,6 +72,7 @@ handles.ENAC_llh = [43.564758116,1.48173363,203.8171];
 handles.StringWType = {'SNR', 'SNR + SV GEO'};
 
 global lambda;
+lambda = 299792458 / 1575.42e6;
 handles.lambda = lambda;
 
 DisplayPlot(hObject,handles,'1','PVT_OpeningFcn')
@@ -86,6 +87,10 @@ axis off
 
 % axes(handles.Liu)
 % imshow('Hello.jpg');
+
+if isfield(handles,'handles_BackUp')
+    handles = rmfield(handles,'handles_BackUp');
+end
 handles.handles_BackUp = handles;
 % Update handles structure
 guidata(hObject, handles);
@@ -106,38 +111,38 @@ varargout{1} = handles.output;
 
 
 % --- Executes on selection change in PseudorangeModelSelection.
-function PseudorangeModelSelection_Callback(hObject, eventdata, handles)
-% hObject    handle to PseudorangeModelSelection (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns PseudorangeModelSelection contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from PseudorangeModelSelection
-
-
-string = get(handles.PseudorangeModelSelection,'String');
-value = get(handles.PseudorangeModelSelection,'Value');
-switch(value)
-    case 1
-        handles.PseudorangeModel = 'Code';
-    case 2
-        handles.PseudorangeModel = 'CodeAndCarrier';
-end
-handles.handles_BackUp = handles;
-guidata(hObject,handles);
+% function PseudorangeModelSelection_Callback(hObject, eventdata, handles)
+% % hObject    handle to PseudorangeModelSelection (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% % Hints: contents = cellstr(get(hObject,'String')) returns PseudorangeModelSelection contents as cell array
+% %        contents{get(hObject,'Value')} returns selected item from PseudorangeModelSelection
+% 
+% 
+% string = get(handles.PseudorangeModelSelection,'String');
+% value = get(handles.PseudorangeModelSelection,'Value');
+% switch(value)
+%     case 1
+%         handles.PseudorangeModel = 'Code';
+%     case 2
+%         handles.PseudorangeModel = 'CodeAndCarrier';
+% end
+% handles.handles_BackUp = handles;
+% guidata(hObject,handles);
 
 
 % --- Executes during object creation, after setting all properties.
-function PseudorangeModelSelection_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to PseudorangeModelSelection (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
+% function PseudorangeModelSelection_CreateFcn(hObject, eventdata, handles)
+% % hObject    handle to PseudorangeModelSelection (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    empty - handles not created until after all CreateFcns called
+% 
+% % Hint: popupmenu controls usually have a white background on Windows.
+% %       See ISPC and COMPUTER.
+% if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+%     set(hObject,'BackgroundColor','white');
+% end
 
 
 % --- Executes on button press in BrowseOBS.
@@ -153,6 +158,9 @@ if handles.filename_o
 else
     set(handles.OBSfile,'String','');
     msgbox('.obs file not selected!')
+end
+if isfield(handles,'handles_BackUp')
+    handles = rmfield(handles,'handles_BackUp');
 end
 handles.handles_BackUp = handles;
 guidata(hObject,handles);
@@ -172,6 +180,9 @@ else
     set(handles.NAVfile,'String','');
     msgbox('.nav file not selected!')
 end
+if isfield(handles,'handles_BackUp')
+    handles = rmfield(handles,'handles_BackUp');
+end
 handles.handles_BackUp = handles;
 guidata(hObject,handles);
 
@@ -182,10 +193,14 @@ function RunButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Run Main
-DisplayPlot(hObject,handles,'1',[])
+BackUp = handles.handles_BackUp;
 handles = handles.handles_BackUp;
-PseudorangeModelSelection_Callback(hObject, eventdata, handles)
-handles = guidata(hObject);
+handles.handles_BackUp = BackUp;
+
+DisplayPlot(hObject,handles,'1',[])
+
+% PseudorangeModelSelection_Callback(hObject, eventdata, handles)
+% handles = guidata(hObject);
 SVToFilter_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
 SmoothNumber_Callback(hObject, eventdata, handles)
@@ -212,6 +227,8 @@ set(handles.SmoothNumber,'Enable','on')
 set(handles.SmoothNumber,'String','100')
 SVSelection_Callback(hObject, eventdata, handles)
 handles = guidata(hObject);
+
+PlotSVs(hObject, eventdata, handles)
 
 guidata(hObject,handles);
 
@@ -248,7 +265,7 @@ axes(handles.Plot1)
 hold off
 for index = 1 : handles.INDEX
     EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
-    EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
+    EpochToPlot = EpochToPlotIndex(round(length(EpochToPlotIndex)/2));
     scatter3(handles.SV(index).Result_x(EpochToPlot)/1000,handles.SV(index).Result_y(EpochToPlot)/1000,handles.SV(index).Result_z(EpochToPlot)/1000,50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
     legend('-DynamicLegend')
     hold all
@@ -277,10 +294,18 @@ DisplayPlot(hObject,handles,'1',[])
 axes(handles.Plot1)
 hold off
 plot(handles.Tracked_mC1(:,handles.SVList),'linestyle','none','marker','.','markersize',15)
+hold on
+Legend = strcat('PRN # ', string(handles.SVTracked(:,handles.SVList)));
+if get(handles.DisplayCS,'value') == 1 && numel(handles.SVList) == 1
+    plot(handles.smoothed(:,handles.SVTracked(:,handles.SVList)),'linestyle','none','marker','.','markersize',7)
+    Legend = [strcat(Legend,' Unsmoothed'), strcat(Legend,' Carrier Smoothed')];
+elseif ~get(handles.DisplayCS,'value') == 1 && numel(handles.SVList) == 1
+    Legend = strcat(Legend, ' Unsmoothed');
+end
 ylabel('meters')
 xlabel('Epoch Number')
 title('Pseudorange','fontweight','bold')
-legend(strcat('PRN # ', string(handles.SVTracked(:,handles.SVList))))
+legend(Legend)
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
@@ -310,48 +335,85 @@ function RXENUButtom_Callback(hObject, eventdata, handles)
 % hObject    handle to RXENUButtom (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+handles.From = 'ENU';
+guidata(hObject,handles);
+
 DisplayPlot(hObject,handles,'234',[])
 WNLSE_Callback(hObject, eventdata, handles);
 handles = guidata(hObject);
+WNLSE = get(handles.WNLSE,'value');
 
 axes(handles.Plot2)
 hold off;
-plot(handles.RX_Position_ENU(:,1))
+
+if ~WNLSE
+     plot(handles.RX_Position_ENU_NLSE(:,1));
+else 
+     plot(handles.RX_Position_ENU_W(1).NLSE(:,1));
+end
 hold on
-plot(handles.RX_Position_ENU_smoothed(:,1))
+plot(handles.RX_Position_ENU(:,1))
+Legend = [{'Unsmoothed Raw'},{'Unsmoothed + IT'}];
+if get(handles.DisplayCS,'Value') == 1
+    plot(handles.RX_Position_ENU_smoothed(:,1))
+    Legend = [Legend ,{'Carrier Smoothing + IT'}];
+end
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of East','fontweight','bold','fontsize',8)
-legend('Unsmoothed','Carrier Smoothing')
+legend(Legend)
+
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
 
 axes(handles.Plot3)
 hold off;
-plot(handles.RX_Position_ENU(:,2));
+if ~WNLSE
+     plot(handles.RX_Position_ENU_NLSE(:,2));
+else 
+     plot(handles.RX_Position_ENU_W(1).NLSE(:,2));
+end
 hold on
-plot(handles.RX_Position_ENU_smoothed(:,2))
+plot(handles.RX_Position_ENU(:,2))
+Legend = [{'Unsmoothed Raw'},{'Unsmoothed + IT'}];
+if get(handles.DisplayCS,'Value') == 1
+    plot(handles.RX_Position_ENU_smoothed(:,2))
+    Legend = [Legend ,{'Carrier Smoothing + IT'}];
+end
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of North','fontweight','bold','fontsize',8)
-legend('Unsmoothed','Carrier Smoothing')
+legend(Legend)
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
 
 axes(handles.Plot4)
 hold off;
-plot(handles.RX_Position_ENU(:,3));
+if ~WNLSE
+     plot(handles.RX_Position_ENU_NLSE(:,3));
+else 
+     plot(handles.RX_Position_ENU_W(1).NLSE(:,3));
+end
 hold on
-plot(handles.RX_Position_ENU_smoothed(:,3))
+plot(handles.RX_Position_ENU(:,3))
+Legend = [{'Unsmoothed Raw'},{'Unsmoothed + IT'}];
+if get(handles.DisplayCS,'Value') == 1
+    plot(handles.RX_Position_ENU_smoothed(:,3))
+    Legend = [Legend ,{'Carrier Smoothing + IT'}];
+end
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of Up','fontweight','bold','fontsize',8)
-legend('Unsmoothed','Carrier Smoothing')
+legend(Legend)
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
+
+handles.From = '0';
+guidata(hObject,handles);
 
 % --- Executes on button press in ElevationButton.
 function ElevationButton_Callback(hObject, eventdata, handles)
@@ -406,7 +468,7 @@ hold off
 
 for index = 1 : handles.INDEX
     EpochToPlotIndex = find(handles.mTracked(:,handles.SVTracked(index)) ~= 0 );
-    EpochToPlot = round(( EpochToPlotIndex(1) + EpochToPlotIndex(end) ) / 2);
+    EpochToPlot = EpochToPlotIndex(round(length(EpochToPlotIndex)/2));
     scatter((handles.SV(index).llh(EpochToPlot,2)),(handles.SV(index).llh(EpochToPlot,1)),50,'d','filled','DisplayName',strcat('PRN # ', num2str(handles.SVTracked(index))));
     legend('-DynamicLegend','Location','BestOutside')
     hold all
@@ -439,17 +501,24 @@ RMS_Errors = [sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2); ...
     sqrt(handles.DOP.EDOP.^2 + handles.DOP.NDOP.^2 + handles.DOP.VDOP.^2 + handles.DOP.TDOP.^2); ...
     handles.DOP.TDOP];
 
-% RMS_Errors_CS = [sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2); ...
-%     sqrt(handles.DOP_smoothed.VDOP.^2);...
-%     sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2 + handles.DOP_smoothed.VDOP.^2);...
-%     sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2 + handles.DOP_smoothed.VDOP.^2 + handles.DOP_smoothed.TDOP.^2); ...
-%     handles.DOP_smoothed.TDOP];
-
+% if get(handles.DisplayCS,'value')
+%     RMS_Errors_smoothed = [sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2); ...
+%         sqrt(handles.DOP_smoothed.VDOP.^2);...
+%         sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2 + handles.DOP_smoothed.VDOP.^2);...
+%         sqrt(handles.DOP_smoothed.EDOP.^2 + handles.DOP_smoothed.NDOP.^2 + handles.DOP_smoothed.VDOP.^2 + handles.DOP_smoothed.TDOP.^2); ...
+%         handles.DOP_smoothed.TDOP];
+% end
 axes(handles.Plot1)
 hold off
-plot(RMS_Errors.' ,'linewidth',1);
+h1 = plot(RMS_Errors.' ,'linewidth',2,'linestyle','-','marker','none','markersize',10,'markeredgecolor','none');
+% set(h1, {'markerfacecolor'}, num2cell(jet(5),2));
+hold on
+% if get(handles.DisplayCS,'value')
+%     h2 = plot(RMS_Errors_smoothed.' ,'linewidth',1,'linestyle','-','color','c','marker','o','markersize',2,'markeredgecolor','none');
+%     set(h2, {'markerfacecolor'}, num2cell(jet(5),2));
+% end
 legend('HDOP','VDOP','PDOP','GDOP','TDOP')
-title('Dilution of Precision)')
+title('Dilution of Precision')
 xlabel('Epoch Number')
 grid on;
 MaxEpoch_Callback(hObject, eventdata, handles);
@@ -490,8 +559,9 @@ function CodeMinusCarrierButton_Callback(hObject, eventdata, handles)
 DisplayPlot(hObject,handles,'1',[])
 
 CMC = handles.Tracked_mC1 - handles.Tracked_mL1*handles.lambda;
-CMC_smoothed = handles.Tracked_smoothed - handles.Tracked_mL1*handles.lambda;
-
+if get(handles.DisplayCS,'value')
+    CMC_smoothed = handles.Tracked_smoothed - handles.Tracked_mL1*handles.lambda;
+end
 axes(handles.Plot1)
 hold off
 plot(CMC(:,handles.SVList),'linewidth',1);
@@ -500,9 +570,14 @@ xlabel('Epoch Number')
 title('Code-minus-Carrier','fontweight','bold')
 Legend = strcat('PRN # ', string(handles.SVTracked(handles.SVList)));
 hold on
-plot(CMC_smoothed(:,handles.SVList),'linewidth',1);
-legend(Legend)
+if get(handles.DisplayCS,'value') && numel(handles.SVList)==1
+    plot(CMC_smoothed(:,handles.SVList),'linewidth',1);
+    Legend = [strcat(Legend, ' Unsmoothed'),strcat( Legend, ' Smoothed')]
+elseif ~get(handles.DisplayCS,'value') && numel(handles.SVList)==1
+    Legend = strcat(Legend, ' Unsmoothed')
+end
 grid on
+legend(Legend)
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
 
@@ -525,18 +600,31 @@ else
     String = {'1'};
     ValueToString = 1;
 end
-LEGEND = [{'Raw','with IT','Carrier Smoothing'}];
-Type = get(handles.WTypeSelection,'Value');
+if get(handles.DisplayCS,'value')
+
+    LEGEND = [{'Raw','+ IT','CS + IT'}];
+
+else
+    
+    LEGEND = [{'Raw','+ IT'}];
+
+end
+Type = 1; %get(handles.WTypeSelection,'Value');
+
 
 East = handles.RX_Position_ENU(:,1);
 North = handles.RX_Position_ENU(:,2);
 std_East = std(East);
 std_North = std(North);
 
+if get(handles.DisplayCS,'value')
+
 East_CS = handles.RX_Position_ENU_smoothed(:,1);
 North_CS = handles.RX_Position_ENU_smoothed(:,2);
 std_East_CS = std(East_CS);
 std_North_CS = std(North_CS);
+
+end
 
 if ~WNLSE
     East_nonIT = handles.RX_Position_ENU_NLSE(:,1);
@@ -550,8 +638,14 @@ end
 std_East_nonIT = std(East_nonIT);
 std_North_nonIT = std(North_nonIT);
 
-sigmas = [std_East, std_East_nonIT, std_East_CS, std_North, std_North_nonIT, std_North_CS];
-Titles = [{'East'}, {'East no IT'}, {'East Carrier Smoothing'}, {'North'}, {'North non IT'}, {'North Carrier Smoothing'}];
+if get(handles.DisplayCS,'value')
+    sigmas = [std_East_nonIT, std_East, std_East_CS, std_North_nonIT, std_North std_North_CS];
+    Titles = [{'East Raw'}, {'East + IT'}, {'East CS + IT'}, {'North Raw'}, {'North + IT'}, {'North CS + IT'}];
+else
+    sigmas = [std_East_nonIT, std_East, std_North_nonIT, std_North];
+    Titles = [{'East Raw'}, {'East + IT'}, {'North Raw'}, {'North + IT'}];
+end
+
 if WNLSE
     Names = String(Type);
 else
@@ -573,8 +667,10 @@ plot(East_nonIT,North_nonIT,'b.','linewidth',1);
 hold on
 plot(East,North,'g.','linewidth',1);
 hold on
-plot(East_CS,North_CS,'r.','linewidth',1);
-title(sprintf('Recevier Position for %s and weight %s (Raw and I/T Corrected).',string, String{ValueToString}))
+if get(handles.DisplayCS,'value')
+    plot(East_CS,North_CS,'r.','linewidth',1);
+end
+title(sprintf('Recevier position error'))
 xlabel('East (m)')
 ylabel('North (m)')
 legend(LEGEND)
@@ -613,7 +709,7 @@ if ~WNLSE
     handles.RX_Position_LLH_smoothed = handles.RX_Position_LLH_UWsmoothed;
     handles.DOP_smoothed = handles.DOP_UWsmoothed;
 else
-    Type = get(handles.WTypeSelection,'value');
+    Type = 1;% get(handles.WTypeSelection,'value');
     set(handles.WTypeSelection,'Enable','on');
     handles.RX_Position_ENU = handles.RX_Position_ENU_W(Type).NLSE_IT;
     handles.RX_Position_LLH = handles.RX_Position_LLH_W(Type).NLSE_IT;
@@ -623,7 +719,7 @@ else
     handles.DOP_smoothed = handles.DOP_Wsmoothed(Type).sm;
 end
 
-guidata(hObject,handles);
+guidata(hObject,handles);   
 
 
 
@@ -654,6 +750,8 @@ if ~strcmp(Call,'PVT_OpeningFcn')
             || strcmp(get(hObject,'string'),'Carrier Phase')...
             || strcmp(get(hObject,'string'),'Code - Carrier')...
             || strcmp(get(hObject,'string'),'SNR')...
+            || strcmp(get(hObject,'string'),'ENU')...
+            || strcmp(get(hObject,'string'),'DoP')
         set(handles.MinEpoch,'Enable','on')
         set(handles.MaxEpoch,'Enable','on')
         set(handles.SVSelection,'Enable','on')
@@ -663,7 +761,7 @@ if ~strcmp(Call,'PVT_OpeningFcn')
         set(handles.SVSelection,'Enable','off')
     end
     if strcmp(get(hObject,'string'),'Code - Carrier')...
-            || strcmp(get(hObject,'string'),'Position Estimates')...
+            || strcmp(get(hObject,'string'),'RX Position Error')...
             || strcmp(get(hObject,'string'),'ENU')
         set(handles.SmoothNumber,'Enable','on')
     else
@@ -723,7 +821,18 @@ MinEpoch = str2num(get(handles.MinEpoch,'String'));
 if ~numel(MinEpoch)
     MinEpoch = 1;
 end
-xlim([MinEpoch, CurrentLimits(2)])
+% xlim([MinEpoch, CurrentLimits(2)])
+if strcmp(get(handles.Plot1,'Visible'),'off') && not(strcmp(handles.From,'ENU') || strcmp(handles.From,'RX Clock + Velocity'))
+    axes(handles.Plot2)
+    xlim([MinEpoch, CurrentLimits(2)])
+    axes(handles.Plot3)
+    xlim([MinEpoch, CurrentLimits(2)])
+    axes(handles.Plot4)
+    xlim([MinEpoch, CurrentLimits(2)])
+else
+%     axes(handles.Plot1)
+    xlim([MinEpoch, CurrentLimits(2)])
+end
 
 % --- Executes during object creation, after setting all properties.
 function MinEpoch_CreateFcn(hObject, eventdata, handles)
@@ -751,7 +860,19 @@ MaxEpoch = str2num(get(handles.MaxEpoch,'String'));
 if ~numel(MaxEpoch)
     MaxEpoch = handles.Nb_Epoch;
 end
-xlim([CurrentLimits(1), MaxEpoch])
+% xlim([CurrentLimits(1), MaxEpoch])
+% if strcmp(handles.From,'ENU') || strcmp(handles.From,'RX Clock + Velocity')
+if strcmp(get(handles.Plot1,'Visible'),'off') && not(strcmp(handles.From,'ENU') || strcmp(handles.From,'RX Clock + Velocity'))
+    axes(handles.Plot2)
+    xlim([CurrentLimits(1), MaxEpoch])
+    axes(handles.Plot3)
+    xlim([CurrentLimits(1), MaxEpoch])
+    axes(handles.Plot4)
+    xlim([CurrentLimits(1), MaxEpoch])
+else
+%     axes(handles.Plot1)
+    xlim([CurrentLimits(1), MaxEpoch])
+end
 
 % --- Executes during object creation, after setting all properties.
 function MaxEpoch_CreateFcn(hObject, eventdata, handles)
@@ -903,7 +1024,7 @@ if handles.SaveDirectory
         filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.kml'];
         iconFilename = fullfile(pwd, 'icon18.png');
         kmlwritepoint(filename,handles.RX_Position_LLH_W(1).NLSE_IT(:,1),...
-            handles.RX_Position_LLH_W(2).NLSE_IT(:,2),handles.RX_Position_LLH_W(2).NLSE_IT(:,3),...
+            handles.RX_Position_LLH_W(1).NLSE_IT(:,2),handles.RX_Position_LLH_W(1).NLSE_IT(:,3),...
             'Icon', iconFilename, 'IconScale',0.2, 'Name', blanks(handles.Nb_Epoch), 'Color', 'blue')
         pause(0.001)
     end
@@ -975,6 +1096,7 @@ skyPlot(handles)
 
 
 
+
 function SmoothNumber_Callback(hObject, eventdata, handles)
 % hObject    handle to SmoothNumber (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1009,6 +1131,10 @@ function CarrierSmoothing_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% Get Smooth Number
+SmoothNumber_Callback(hObject, eventdata, handles);
+handles = guidata(hObject);
+
 %Caculate Carrier Smoothing
 handles.CMC = handles.mC1 - handles.mL1*handles.lambda;
 [handles.smoothed,handles.cycle_slip] = Carrier_Smoothing(handles.mC1,handles.mL1,handles.smoothnumber,handles.CMC);
@@ -1020,19 +1146,95 @@ for num_SV=1:length(handles.SVTracked)
 end
 handles.Tracked_smoothed(handles.Tracked_smoothed==0) = nan;
 
+handles.CallNumber = 0;
+ExpectedCalls = 2;
 
-%Smoothed Non Linear LSE
-[handles.RX_Position_XYZ_UWsmoothed, handles.RX_ClockError_UWsmoothed, handles.Matrix_UWsmoothed] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NLSE',0,handles.Tiono,handles.Ttropo,7,[],handles.MessageBox);
+%Smoothed Non Linear LSE - ATMOSPHERIC CORRECTION
+[handles.RX_Position_XYZ_UWsmoothed, handles.RX_Velocity_XYZ_UWsmoothed, handles.RX_ClockError_UWsmoothed, handles.Matrix_UWsmoothed,handles.CallNumber] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mD1,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NLSE',0,handles.Tiono,handles.Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
 [handles.RX_Position_LLH_UWsmoothed, handles.RX_Position_ENU_UWsmoothed, handles.Matrix_UWsmoothed, handles.DOP_UWsmoothed] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_UWsmoothed,handles.Nb_Epoch,handles.Matrix_UWsmoothed);
 
 % Smoothed Weighted (SNR) Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_Wsmoothed(1).sm, handles.RX_ClockError_Wsmoothed(1).sm, handles.Matrix_Wsmoothed(1).sm] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NWLSE',1,handles.Tiono,handles.Ttropo,8,[],handles.MessageBox);
+[handles.RX_Position_XYZ_Wsmoothed(1).sm, handles.RX_Velocity_XYZ_Wsmoothed(1).sm, handles.RX_ClockError_Wsmoothed(1).sm, handles.Matrix_Wsmoothed(1).sm,handles.CallNumber] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mD1,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NWLSE',1,handles.Tiono,handles.Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
 [handles.RX_Position_LLH_Wsmoothed(1).sm, handles.RX_Position_ENU_Wsmoothed(1).sm, handles.Matrix_Wsmoothed(1).sm, handles.DOP_Wsmoothed(1).sm] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_Wsmoothed(1).sm,handles.Nb_Epoch,handles.Matrix_Wsmoothed(1).sm);
 
-% Smoothed Weighted (SNR + ELEVATION) Non Linear LSE - ATMOSPHERIC CORRECTION
-[handles.RX_Position_XYZ_Wsmoothed(2).sm, handles.RX_ClockError_Wsmoothed(2).sm, handles.Matrix_Wsmoothed(2).sm] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NWLSE',2,handles.Tiono,handles.Ttropo,9,handles.Elevation_Azimuth,handles.MessageBox);
-[handles.RX_Position_LLH_Wsmoothed(2).sm, handles.RX_Position_ENU_Wsmoothed(2).sm, handles.Matrix_Wsmoothed(2).sm, handles.DOP_Wsmoothed(2).sm] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_Wsmoothed(2).sm,handles.Nb_Epoch,handles.Matrix_Wsmoothed(2).sm);
+% % Smoothed Weighted (SNR + ELEVATION) Non Linear LSE - ATMOSPHERIC CORRECTION
+% [handles.RX_Position_XYZ_Wsmoothed(2).sm, handles.RX_Velocity_XYZ_Wsmoothed(2).sm, handles.RX_ClockError_Wsmoothed(2).sm, handles.Matrix_Wsmoothed(2).sm,handles.CallNumber] = RX_Position_and_Clock(handles.Result,handles.smoothed,handles.mD1,handles.mS1,handles.Nb_Epoch,handles.vNb_Sat,'NWLSE',2,handles.Tiono,handles.Ttropo,handles.CallNumber,handles.Elevation_Azimuth,handles.MessageBox,ExpecedCalls);
+% [handles.RX_Position_LLH_Wsmoothed(2).sm, handles.RX_Position_ENU_Wsmoothed(2).sm, handles.Matrix_Wsmoothed(2).sm, handles.DOP_Wsmoothed(2).sm] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_Wsmoothed(2).sm,handles.Nb_Epoch,handles.Matrix_Wsmoothed(2).sm);
 
 guidata(hObject,handles);
+% WNLSE_Callback(hObject, eventdata, handles);
+% handles = guidata(hObject);
+% guidata(hObject,handles);
 
 
+
+% --- Executes on button press in DisplayCS.
+function DisplayCS_Callback(hObject, eventdata, handles)
+% hObject    handle to DisplayCS (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of DisplayCS
+
+
+% --- Executes on button press in ReceiverClockAndVelocity.
+function ReceiverClockAndVelocity_Callback(hObject, eventdata, handles)
+% hObject    handle to ReceiverClockAndVelocity (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+DisplayPlot(hObject,handles,'234',[]);
+
+axes(handles.Plot2)
+hold off
+plot(handles.iUser_SoW + handles.RX_ClockError_NLSE_IT,'linewidth',5);
+legend('Receiver Clock + Error')
+title('Receiver Clock','fontsize',8)
+xlabel('Epoch Number','fontsize',8)
+grid on
+
+axes(handles.Plot3)
+hold off
+plot(handles.RX_Velocity_XYZ_NLSE_IT(:,1),'b');
+% hold on
+% plot(handles.RX_ClockError_W(1).NLSE_IT,'g');
+title('X Axis Velocity','fontsize',8)
+xlabel('Epoch Number','fontsize',8)
+grid on
+
+axes(handles.Plot4)
+hold off
+plot(handles.RX_Velocity_XYZ_NLSE_IT(:,2),'b');
+% hold on
+% plot(handles.RX_ClockError_Wsmoothed(1).sm,'g');
+title('Y Axis Velocity','fontsize',8)
+xlabel('Epoch Number','fontsize',8)
+grid on
+
+MaxEpoch_Callback(hObject, eventdata, handles);
+MinEpoch_Callback(hObject, eventdata, handles);
+
+
+
+function PlotSVs(hObject, eventdata, handles)
+
+set(handles.PlotSV,'visible','on')
+
+v = reshape([1:32],[2 16]).';
+axes(handles.PlotSV)
+hold off
+plot(ones(16,1),v(:,1),'ob','markersize',18); hold on; plot(2*ones(16,2),v(:,1),'ob','markersize',18); xlim([0.5, 2.5]); ylim([0 32.5]);
+hold on
+for k = handles.TotalSVTracked
+    plot(abs(1 - rem(k,2)) + 1, v(numel(v) - floor(k/2) ) - 1 + 2*(1 - rem(k,2)) ,'markersize',18,'markerfacecolor','c','marker','o');
+    hold on
+    if sum(k == handles.SVListFilter) == 0
+        plot(abs(1 - rem(k,2)) + 1, v(numel(v) - floor(k/2) ) - 1 + 2*(1 - rem(k,2)),'markersize',18,'markerfacecolor','g','marker','o');
+    end
+end
+text(ones(16,1)-0.1,v(end:-1:1,1),string(v(:,1)));
+text(2*ones(16,1)-0.1, v(end:-1:1,1),string(v(:,2)));
+set(gca,'XTick',[])
+set(gca,'YTick',[])
+title('# PRN VISIBLE','fontsize',8)
+xlabel(sprintf('\n Cyan : Not Processed \n Green : Processed'),'fontsize',8)
+guidata(hObject,handles);
