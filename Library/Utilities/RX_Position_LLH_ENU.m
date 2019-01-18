@@ -9,14 +9,14 @@ for epoch=1:Nb_Epoch
     RX_Position_LLH(epoch,:) = vLLH;
 end
 
-% ---
-RX_Position_LLH_test = zeros(Nb_Epoch,3);
-for epoch=1:Nb_Epoch
-    xyz = RX_Position_XYZ(epoch,:);
-    [lat, lon, alt] = wgsxyz2lla(xyz);
-    RX_Position_LLH_test(epoch,:) = [lat, lon, alt];
-end
-% ---
+% % ---
+% RX_Position_LLH_test = zeros(Nb_Epoch,3);
+% for epoch=1:Nb_Epoch
+%     xyz = RX_Position_XYZ(epoch,:);
+%     [lat, lon, alt] = wgsxyz2lla(xyz);
+%     RX_Position_LLH_test(epoch,:) = [lat, lon, alt];
+% end
+% % ---
 
 mean_XYZ = mean(RX_Position_XYZ);
 stdev_XYZ = std(RX_Position_XYZ);
@@ -38,14 +38,14 @@ for epoch=1:Nb_Epoch
     DOP.TDOP(epoch) = tmp(4);
 end
 
-% ---
-RX_Position_ENU_test = zeros(Nb_Epoch,3);
-[reflat, reflon, refalt] = wgsxyz2lla(mean_XYZ);
-for epoch=1:Nb_Epoch
-    xyz = RX_Position_XYZ(epoch,:);
-    enu = wgsxyz2enu(xyz', reflat, reflon, refalt);
-    RX_Position_ENU_test(epoch,:) = enu';
-end
-% ---
+% % ---
+% RX_Position_ENU_test = zeros(Nb_Epoch,3);
+% [reflat, reflon, refalt] = wgsxyz2lla(mean_XYZ);
+% for epoch=1:Nb_Epoch
+%     xyz = RX_Position_XYZ(epoch,:);
+%     enu = wgsxyz2enu(xyz', reflat, reflon, refalt);
+%     RX_Position_ENU_test(epoch,:) = enu';
+% end
+% % ---
 
 end

@@ -362,8 +362,7 @@ end
 ylabel('meters','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 title('Error of East','fontweight','bold','fontsize',8)
-legend(Legend)
-
+legend(Legend);
 grid on
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
@@ -629,11 +628,11 @@ end
 if ~WNLSE
     East_nonIT = handles.RX_Position_ENU_NLSE(:,1);
     North_nonIT = handles.RX_Position_ENU_NLSE(:,2);
-    string = 'LSE';
+%     string = 'LSE';
 elseif WNLSE
     East_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,1);
     North_nonIT = handles.RX_Position_ENU_W(Type).NLSE(:,2);
-    string = 'Weighted LSE';
+%     string = 'Weighted LSE';
 end
 std_East_nonIT = std(East_nonIT);
 std_North_nonIT = std(North_nonIT);
@@ -647,7 +646,7 @@ else
 end
 
 if WNLSE
-    Names = String(Type);
+    Names = {['WNLSE - ' cell2mat(String(Type))]};
 else
     Names = {'NLSE'};
 end
@@ -659,7 +658,7 @@ clc
 fprintf('Error Standard Deviation with %s algorithm:', String{ValueToString});
 disp(' ')
 fprintf('------------------------------------------------------');
-STD = [{'Weight \ Coordinate'},Titles;Names,Rows]
+STD = [{'Algorithm'},Titles;Names,Rows]
 
 axes(handles.Plot1)
 hold off
@@ -989,6 +988,7 @@ if handles.LoadFile
     
     guidata(hObject,handles);
     OrbitsButton_Callback(hObject, eventdata, handles)
+    PlotSVs(hObject, eventdata, handles)
 end
 
 % --- Executes on button press in SaveButton.
@@ -1186,8 +1186,8 @@ DisplayPlot(hObject,handles,'234',[]);
 
 axes(handles.Plot2)
 hold off
-plot(handles.iUser_SoW + handles.RX_ClockError_NLSE_IT,'linewidth',5);
-legend('Receiver Clock + Error')
+plot(handles.iUser_SoW - handles.RX_ClockError_NLSE_IT,'linewidth',5);
+legend('Receiver Clock - Error')
 title('Receiver Clock','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 grid on
