@@ -298,7 +298,7 @@ hold on
 Legend = strcat('PRN # ', string(handles.SVTracked(:,handles.SVList)));
 if get(handles.DisplayCS,'value') == 1 && numel(handles.SVList) == 1
     plot(handles.smoothed(:,handles.SVTracked(:,handles.SVList)),'linestyle','none','marker','.','markersize',7)
-    Legend = [strcat(Legend,' Unsmoothed'), strcat(Legend,' Carrier Smoothed')];
+    Legend = [strcat(Legend,' Unsmoothed'), strcat(Legend,' Smoothed')];
 elseif ~get(handles.DisplayCS,'value') == 1 && numel(handles.SVList) == 1
     Legend = strcat(Legend, ' Unsmoothed');
 end
@@ -571,9 +571,9 @@ Legend = strcat('PRN # ', string(handles.SVTracked(handles.SVList)));
 hold on
 if get(handles.DisplayCS,'value') && numel(handles.SVList)==1
     plot(CMC_smoothed(:,handles.SVList),'linewidth',1);
-    Legend = [strcat(Legend, ' Unsmoothed'),strcat( Legend, ' Smoothed')]
+    Legend = [strcat(Legend, ' Unsmoothed'),strcat( Legend, ' Smoothed')];
 elseif ~get(handles.DisplayCS,'value') && numel(handles.SVList)==1
-    Legend = strcat(Legend, ' Unsmoothed')
+    Legend = strcat(Legend, ' Unsmoothed');
 end
 grid on
 legend(Legend)
@@ -747,10 +747,11 @@ if ~strcmp(Call,'PVT_OpeningFcn')
             || strcmp(get(hObject,'string'),'Azimuth')...
             || strcmp(get(hObject,'string'),'Pseudorange')...
             || strcmp(get(hObject,'string'),'Carrier Phase')...
-            || strcmp(get(hObject,'string'),'Code - Carrier')...
+            || strcmp(get(hObject,'string'),'CMC')...
             || strcmp(get(hObject,'string'),'SNR')...
             || strcmp(get(hObject,'string'),'ENU')...
-            || strcmp(get(hObject,'string'),'DoP')
+            || strcmp(get(hObject,'string'),'DoP')...
+            || strcmp(get(hObject,'string'),'RX Clock + Velocity')
         set(handles.MinEpoch,'Enable','on')
         set(handles.MaxEpoch,'Enable','on')
         set(handles.SVSelection,'Enable','on')
@@ -759,7 +760,7 @@ if ~strcmp(Call,'PVT_OpeningFcn')
         set(handles.MaxEpoch,'Enable','off')
         set(handles.SVSelection,'Enable','off')
     end
-    if strcmp(get(hObject,'string'),'Code - Carrier')...
+    if strcmp(get(hObject,'string'),'CMC')...
             || strcmp(get(hObject,'string'),'RX Position Error')...
             || strcmp(get(hObject,'string'),'ENU')
         set(handles.SmoothNumber,'Enable','on')
@@ -1015,19 +1016,26 @@ end
 DataSetName = {''};
 
 if handles.SaveDirectory
-    DataSetName = inputdlg('Write a name for the data to save');
-    if numel(cell2mat(DataSetName))
-        set(handles.MessageBox,'String','Saving data...')
-        pause(0.001)
-        save([handles.SaveDirectory '\' cell2mat(DataSetName) '.mat'],'HandlesSaved');
-        set(handles.MessageBox,'String','Data Saved!')
-        filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.kml'];
-        iconFilename = fullfile(pwd, 'icon18.png');
-        kmlwritepoint(filename,handles.RX_Position_LLH_W(1).NLSE_IT(:,1),...
-            handles.RX_Position_LLH_W(1).NLSE_IT(:,2),handles.RX_Position_LLH_W(1).NLSE_IT(:,3),...
-            'Icon', iconFilename, 'IconScale',0.2, 'Name', blanks(handles.Nb_Epoch), 'Color', 'blue')
-        pause(0.001)
+    while not(numel(cell2mat(DataSetName)))
+        DataSetName = inputdlg('Write a name for the data to save');
     end
+%     if numel(DataSetName)
+        if exist([handles.SaveDirectory '\' cell2mat(DataSetName) '.mat'],'file')
+            delete([handles.SaveDirectory '\' cell2mat(DataSetName) '.mat'])
+        end
+        if numel(cell2mat(DataSetName))
+            set(handles.MessageBox,'String','Saving data...')
+            pause(0.001)
+            save([handles.SaveDirectory '\' cell2mat(DataSetName) '.mat'],'HandlesSaved');
+            set(handles.MessageBox,'String','Data Saved!')
+            filename = [handles.SaveDirectory '\' cell2mat(DataSetName) '.kml'];
+            iconFilename = fullfile(pwd, 'icon18.png');
+            kmlwritepoint(filename,handles.RX_Position_LLH_W(1).NLSE_IT(:,1),...
+                handles.RX_Position_LLH_W(1).NLSE_IT(:,2),handles.RX_Position_LLH_W(1).NLSE_IT(:,3),...
+                'Icon', iconFilename, 'IconScale',0.2, 'Name', blanks(handles.Nb_Epoch), 'Color', 'blue')
+            pause(0.001)
+        end
+%     end
 end
 if ~numel(handles.SaveDirectory) || ~numel(cell2mat(DataSetName))
     msgbox('Data not saved')
@@ -1182,36 +1190,69 @@ function ReceiverClockAndVelocity_Callback(hObject, eventdata, handles)
 % hObject    handle to ReceiverClockAndVelocity (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.From = 'ENU';
+guidata(hObject,handles);
+
 DisplayPlot(hObject,handles,'234',[]);
 
 axes(handles.Plot2)
 hold off
-plot(handles.iUser_SoW - handles.RX_ClockError_NLSE_IT,'linewidth',5);
-legend('Receiver Clock - Error')
-title('Receiver Clock','fontsize',8)
+plot(handles.RX_ClockError_NLSE_IT,'linewidth',5);
+% legend('Receiver Clock - Error')
+title('Receiver Clock Bias \Delta t_{RX}','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
+ylabel('s')
 grid on
 
 axes(handles.Plot3)
 hold off
-plot(handles.RX_Velocity_XYZ_NLSE_IT(:,1),'b');
-% hold on
-% plot(handles.RX_ClockError_W(1).NLSE_IT,'g');
-title('X Axis Velocity','fontsize',8)
+plot(handles.iUser_SoW - handles.RX_ClockError_NLSE_IT,'linewidth',5);
+% legend('Receiver Clock - Error')
+title('Receiver Clock as t_{RX}^{GPS} = t_{RX} - \Delta t_{RX}','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
+ylabel('s')
 grid on
 
+VRX = zeros(1,handles.Nb_Epoch);
+VdiffRX = zeros(1,handles.Nb_Epoch);
+VdiffRX = handles.RX_Velocity_XYZ_NLSE_IT(2:end,:) - handles.RX_Velocity_XYZ_NLSE_IT(1:end-1,:);
+for count = 1 : handles.Nb_Epoch
+    VRX(count) = norm(VdiffRX(count));
+end
 axes(handles.Plot4)
 hold off
-plot(handles.RX_Velocity_XYZ_NLSE_IT(:,2),'b');
+plot(VRX .* 3.6,'b');
 % hold on
-% plot(handles.RX_ClockError_Wsmoothed(1).sm,'g');
-title('Y Axis Velocity','fontsize',8)
+% plot(handles.RX_ClockError_W(1).NLSE_IT,'g');
+title('Receiver Velocity ||V_{RX}||','fontsize',8)
 xlabel('Epoch Number','fontsize',8)
 grid on
+ylabel('km/h')
+
+
+% axes(handles.Plot3)
+% hold off
+% plot(handles.RX_Velocity_XYZ_NLSE_IT(:,1),'b');
+% % hold on
+% % plot(handles.RX_ClockError_W(1).NLSE_IT,'g');
+% title('X Axis Velocity','fontsize',8)
+% xlabel('Epoch Number','fontsize',8)
+% grid on
+% 
+% axes(handles.Plot4)
+% hold off
+% plot(handles.RX_Velocity_XYZ_NLSE_IT(:,2),'b');
+% % hold on
+% % plot(handles.RX_ClockError_Wsmoothed(1).sm,'g');
+% title('Y Axis Velocity','fontsize',8)
+% xlabel('Epoch Number','fontsize',8)
+% grid on
 
 MaxEpoch_Callback(hObject, eventdata, handles);
 MinEpoch_Callback(hObject, eventdata, handles);
+
+handles.From = '0';
+guidata(hObject,handles);
 
 
 

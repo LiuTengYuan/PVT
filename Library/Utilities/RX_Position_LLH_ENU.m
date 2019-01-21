@@ -3,10 +3,14 @@ function [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(R
 %transforms the rectangular coordinates (x,y,z) in ECEF frame to the geodetic coordinates(Latitude,Longitude,Height) above the reference ellipsoid)
 RX_Position_LLH = zeros(Nb_Epoch,3);
 for epoch=1:Nb_Epoch
+    if sum(not(isnan(RX_Position_XYZ(epoch,:))))
     vXYZ = RX_Position_XYZ(epoch,:);
     vLLH = xyz_2_lla_PVT(vXYZ);
     vLLH(1) = vLLH(1)*180/pi; vLLH(2) = vLLH(2)*180/pi;
     RX_Position_LLH(epoch,:) = vLLH;
+    else
+        RX_Position_LLH(epoch,:) = [NaN NaN NaN];
+    end
 end
 
 % % ---
@@ -18,12 +22,14 @@ end
 % end
 % % ---
 
-mean_XYZ = mean(RX_Position_XYZ);
-stdev_XYZ = std(RX_Position_XYZ);
+index = find(not(isnan(RX_Position_XYZ(:,1))) == 1);
+mean_XYZ = mean(RX_Position_XYZ(index,:));
+stdev_XYZ = std(RX_Position_XYZ(index,:));
 
 RX_Position_ENU = zeros(Nb_Epoch,3);
 vXYZ0 = mean_XYZ;
 for epoch=1:Nb_Epoch
+    if sum(not(isnan(RX_Position_XYZ(epoch,:))))
     vXYZw = RX_Position_XYZ(epoch,:);
     vXYZw_dir = vXYZw-vXYZ0;
     [vXYZl, mTRANSF] = delta_wgs84_2_local(vXYZw_dir', vXYZ0');
@@ -36,6 +42,13 @@ for epoch=1:Nb_Epoch
     DOP.NDOP(epoch) = tmp(2);
     DOP.VDOP(epoch) = tmp(3);
     DOP.TDOP(epoch) = tmp(4);
+    else
+        RX_Position_ENU(epoch,:) = [NaN NaN NaN];
+        DOP.EDOP(epoch) = NaN;
+        DOP.NDOP(epoch) = NaN;
+        DOP.VDOP(epoch) = NaN;
+        DOP.TDOP(epoch) = NaN;
+    end
 end
 
 % % ---

@@ -33,7 +33,7 @@ for sv=SVTracked
                 diff_sv_clock = Result(epoch).SV(target_sv,6)-Result(before_epoch).SV(target_sv_before,6);
                 time = epoch-before_epoch;
             end
-            Result(epoch).SV(target_sv,7:9) = distance/time;
+            Result(epoch).SV(target_sv,5:7) = distance/time;
             Result(epoch).SV(target_sv,10) = diff_sv_clock/time;
         end
     end

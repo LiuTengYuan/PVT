@@ -14,7 +14,7 @@ for epoch=1:Nb_Epoch
     Pseudorange_rate_difference = zeros(vNb_Sat(epoch),1);
     while (abs(delta_VX) > 0.0001 || abs(delta_VY) > 0.0001 || abs(delta_VZ) > 0.0001) % norm(Corrected_delta(1:3))
         for SV_num = 1:vNb_Sat(epoch)
-            SV_VX = Result(epoch).SV(SV_num,7); SV_VY = Result(epoch).SV(SV_num,8); SV_VZ = Result(epoch).SV(SV_num,9);
+            SV_VX = Result(epoch).SV(SV_num,5); SV_VY = Result(epoch).SV(SV_num,6); SV_VZ = Result(epoch).SV(SV_num,7);
             tsv_rate = Result(epoch).SV(SV_num,10);
             Pseudorange_rate_bar = -(Matrix(epoch).H(SV_num,1)*(SV_VX-RX_VXbar)+Matrix(epoch).H(SV_num,2)*(SV_VY-RX_VYbar)+Matrix(epoch).H(SV_num,3)*(SV_VZ-RX_VZbar));
             Pseudorange_rate = mD1(epoch,Result(epoch).SV(SV_num,1))*wavelength_L1;

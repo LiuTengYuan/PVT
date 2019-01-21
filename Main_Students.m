@@ -85,10 +85,14 @@ Total_Nb_Sat = length(find(sum(mTracked)~=0));
 %% Compute Transmission Time  &  SV Position and ClockCorrection
 
 global c;
+global f;
+c = 299792458.0; %(m/s) speed of light
+f = 1575.42e6; %(Hz) L1 frequency
+
 Result(Nb_Epoch) = struct(); % This way automatically allocate memory for all Nb_Epoch structures.
 Result_Info(Nb_Epoch) = struct();
 
-Titles = {'SV # PRN','SV_X','SV_Y','SV_Z','SV_ClockError_second','SV_ClockError_meter'};
+Titles = {'SV # PRN','SV_X','SV_Y','SV_Z', 'SV_X_der','SV_Y_der','SV_Z_der','SV_ClockError_second','SV_ClockError_meter'};
 
 for epoch=1:Nb_Epoch
     Result_Info(epoch).INFO = Titles;
@@ -101,10 +105,11 @@ for epoch=1:Nb_Epoch
             %Select Ephermis (set the best fits SV iPRN at tiem iUser_Nos)
             [vEphemeris] = SelectEphemeris(Ephem, PRN, iUser_NoS(epoch));
             [iDelta_t_SV, iT_SV] = ComputeTransmissionTime(vEphemeris, iUser_SoW(epoch), f_C1);
-            [vSatellite_xyz, fSV_ClockCorr] = SV_Position_and_ClockCorrection(vEphemeris, iT_SV, iUser_SoW(epoch), iDelta_t_SV);
+            [rSatellite_xyz, vSatellite_xyz, fSV_ClockCorr] = SV_Position_and_ClockCorrection(vEphemeris, iT_SV, iUser_SoW(epoch), iDelta_t_SV);
             fSV_ClockCorr_meter = fSV_ClockCorr*c;
-            Result(epoch).SV(count,:) =[PRN, vSatellite_xyz, fSV_ClockCorr, fSV_ClockCorr_meter];
-            Result_Info(epoch).INFO = [Result_Info(epoch).INFO; num2cell([PRN, vSatellite_xyz,fSV_ClockCorr, fSV_ClockCorr_meter])];
+            Result(epoch).SV(count,:) =[PRN, rSatellite_xyz, vSatellite_xyz, fSV_ClockCorr, fSV_ClockCorr_meter];
+            
+            Result_Info(epoch).INFO = [Result_Info(epoch).INFO; num2cell([PRN, rSatellite_xyz, vSatellite_xyz,fSV_ClockCorr, fSV_ClockCorr_meter])];
             count = count+1;
         end
     end
@@ -165,7 +170,7 @@ legend(Legend);
 %% Receiver Position and Receiver Clock Error
 Tiono = zeros(Nb_Epoch,Total_Nb_Sat);
 Ttropo = zeros(Nb_Epoch,Total_Nb_Sat);
-[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',[],Tiono,Ttropo,2,[],[],SVTracked);
+[RX_Position_XYZ, RX_ClockError, Matrix] = RX_Position_and_Clock(Result,mC1,mD1,mS1,Nb_Epoch,vNb_Sat,'NWLSE',0,Tiono,Ttropo,2,[],[],SVTracked);
 [RX_Position_LLH, RX_Position_ENU, Matrix, DOP] = RX_Position_LLH_ENU(RX_Position_XYZ,Nb_Epoch,Matrix);
 
 mean_LLH = mean(RX_Position_LLH);

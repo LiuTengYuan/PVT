@@ -11,6 +11,13 @@ for index = 1 : handles.INDEX
     %% Satellite Information
     azi(index)=handles.azimuth_SV(EpochToPlot(index),index);  %Azimuth in degrees
     el(index)=handles.elevation_SV(EpochToPlot(index),index);             %Elevation angle in degrees
+    if not(isnan(azi(index)))
+        SaveEpoch = EpochToPlot(index);
+    end
+    if isnan(azi(index))
+        azi(index) = handles.azimuth_SV(SaveEpoch,index);
+        el(index) = handles.elevation_SV(SaveEpoch,index);
+    end
 end
 
 %% Plot Figure

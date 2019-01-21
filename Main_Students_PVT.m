@@ -143,10 +143,10 @@ for epoch=1:Nb_Epoch
     
     clc;
     ProcessingCompleted = round(epoch/(Nb_Epoch)*100);
-    fprintf("\n SV Position Processig... ");
+    fprintf("\n SV Position Processing... ");
     fprintf(" \n Total Completed - %.2f %% \n",ProcessingCompleted);
     if mod(ProcessingCompleted,10)==0
-        set(handles.MessageBox,'string',sprintf("\n SV Position Processig...\n Total Completed - %.2f %%",ProcessingCompleted));
+        set(handles.MessageBox,'string',sprintf("\n SV Position Processing...\n Total Completed - %.2f %%",ProcessingCompleted));
         pause(0.01)
     end
 end
@@ -307,6 +307,9 @@ handles.Ttropo = Ttropo;
 %Non Linear LSE
 [handles.RX_Position_XYZ_NLSE_IT, handles.RX_Velocity_XYZ_NLSE_IT, handles.RX_ClockError_NLSE_IT, handles.Matrix_NLSE_IT,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NLSE',0,Tiono,Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
 [handles.RX_Position_LLH_NLSE_IT, handles.RX_Position_ENU_NLSE_IT, handles.Matrix_NLSE_IT, handles.DOP_NLSE_IT] = RX_Position_LLH_ENU(handles.RX_Position_XYZ_NLSE_IT,Nb_Epoch,handles.Matrix_NLSE_IT);
+
+% [Result, Result_Info] = SV_Velocity_and_ClockCorrectionRate(Result,Result_Info,handles.mTracked,handles.SVTracked);
+% [RX_Velocity_XYZ, RX_ClockErrorRate] = RX_Velocity_and_Clock_Rate(Result,handles.mD1,Nb_Epoch,vNb_Sat,handles.Matrix_NLSE_IT);
 
 % Weighted (SNR) Non Linear LSE - ATMOSPHERIC CORRECTION
 [handles.RX_Position_XYZ_W(1).NLSE_IT, handles.RX_Velocity_XYZ_W(1).NLSE_IT, handles.RX_ClockError_W(1).NLSE_IT, handles.Matrix_W(1).NLSE_IT,handles.CallNumber] = RX_Position_and_Clock(Result,handles.mC1,handles.mD1,handles.mS1,Nb_Epoch,vNb_Sat,'NWLSE',1,Tiono,Ttropo,handles.CallNumber,[],handles.MessageBox,ExpectedCalls);
