@@ -59,6 +59,21 @@ fprintf('\nEnd of reading the RINEX files.\n');
 [mEpoch, Nb_Epoch, vNb_Sat, Total_Nb_Sat, mTracked, handles.mC1, handles.mL1, handles.mD1, handles.mS1]=ExtractData_O(DATA_O, nEpoch_max);
 fprintf('\nEnd of extracting the data.\n');
 
+% There are some epoch that we can track some satellites yet not have their
+% mC1, mL1, mD1, mS1 values
+Real_mTracked = zeros(Nb_Epoch);
+for epoch = 1:Nb_Epoch
+    for PRN=1:length(mTracked(1,:))
+        if mTracked(epoch,PRN)==1 && handles.mS1(epoch,PRN)==0
+            mTracked(epoch,PRN) = 0;
+        end
+    end
+    Real_mTracked(epoch) = length(handles.mS1(epoch,handles.mS1(epoch,:)~=0));
+    if Real_mTracked(epoch)~=vNb_Sat(epoch)
+        vNb_Sat(epoch) = Real_mTracked(epoch);
+    end
+end
+
 %There exist some epochs that can receive the satellite data yet cannot
 %receive the ephemeris data
 for epoch=1:Nb_Epoch
@@ -126,7 +141,8 @@ for epoch=1:Nb_Epoch
     iUser_SoW = mEpoch(:,2); %user time(SoW)
     count = 1;
     for PRN=1:length(mTracked(1,:))
-        if mTracked(epoch,PRN)==1 %Use mTracked(i,j) to decide if PRN j is tracked at epoch i
+        %Use mTracked(i,j) to decide if PRN j is tracked at epoch i
+        if mTracked(epoch,PRN)==1
             f_C1 = handles.mC1(epoch,PRN); %code range measurement of j satellite at epoch i
             %Select Ephermis (set the best fits SV iPRN at tiem iUser_Nos)
             [vEphemeris] = SelectEphemeris(Ephem, PRN, iUser_NoS(epoch));
@@ -166,7 +182,7 @@ for PRN=handles.SVTracked
     SV(index).PRN = PRN;
     for epoch=1:Nb_Epoch
         INDEX = find(Result(epoch).SV(:,1) == PRN);
-        if mTracked(epoch,PRN)
+        if mTracked(epoch,PRN) && handles.mS1(epoch,PRN)~=0
             SV(index).Result_x(epoch) = Result(epoch).SV(INDEX,2); % We have to plot a vector once directly, instead of ploting point by point. Thus, we need to pass from the struct to a vector.
             SV(index).Result_y(epoch) = Result(epoch).SV(INDEX,3); % In every epoch we have 1 position for each satellite, this forces us to plot point by point and may take several time (Ni plots).
             SV(index).Result_z(epoch) = Result(epoch).SV(INDEX,4); % So we change rewrite as Ni positions for each satellite, going around all its epochs.
@@ -224,7 +240,8 @@ handles.Tracked_mL1 = zeros(Nb_Epoch,length(handles.SVTracked));
 for num_SV=1:length(handles.SVTracked)
     handles.Tracked_mL1(:,num_SV) = handles.mL1(:,handles.SVTracked(num_SV));
 end
-handles.Tracked_mL1(handles.Tracked_mL1==0) = nan;
+%Using 10 rather than 0 is becasue some mL1 values are not zero but very small
+handles.Tracked_mL1(handles.Tracked_mL1<10) = nan;
 
 %%-------------------------------------------------------------------------
 
